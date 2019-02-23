@@ -1,7 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="3968e0fe-b6b3-4d4c-9107-650b0541eddd" name="Default Changelist" comment="" />
+    <list default="true" id="3968e0fe-b6b3-4d4c-9107-650b0541eddd" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/../CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Logic/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../Logic/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Logic/Logic.cxx" beforeDir="false" afterPath="$PROJECT_DIR$/../Logic/Logic.cxx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Logic/Logic.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../Logic/Logic.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Logic/benderWeightMap.cxx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Logic/benderWeightMap.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Logic/benderWeightMap.txx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Logic/benderWeightMapIO.cxx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Logic/benderWeightMapIO.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Logic/benderWeightMapIO.txx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Logic/benderWeightMapMath.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TModel.py" beforeDir="false" afterPath="$PROJECT_DIR$/TModel.py" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -13,8 +27,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/TModel.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="557">
-              <caret line="199" column="62" lean-forward="true" selection-start-line="199" selection-start-column="62" selection-end-line="199" selection-end-column="63" />
+            <state relative-caret-position="319">
+              <caret line="185" column="18" lean-forward="true" selection-start-line="185" selection-start-column="18" selection-end-line="185" selection-end-column="18" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -58,9 +72,10 @@
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="-7" />
-    <option name="width" value="974" />
-    <option name="height" value="1047" />
+    <option name="x" value="2281" />
+    <option name="y" value="-26" />
+    <option name="width" value="1400" />
+    <option name="height" value="1000" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -140,16 +155,15 @@
       <workItem from="1550861440387" duration="618000" />
       <workItem from="1550920151758" duration="174000" />
       <workItem from="1550946978435" duration="1114000" />
-      <workItem from="1550948864802" duration="371000" />
+      <workItem from="1550948864802" duration="1624000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="8114000" />
+    <option name="totallyTimeSpent" value="9367000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
-    <editor active="true" />
+    <frame x="1912" y="-8" width="1936" height="1056" extended-state="6" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.19829424" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
@@ -187,8 +201,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/TModel.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="557">
-          <caret line="199" column="62" lean-forward="true" selection-start-line="199" selection-start-column="62" selection-end-line="199" selection-end-column="63" />
+        <state relative-caret-position="319">
+          <caret line="185" column="18" lean-forward="true" selection-start-line="185" selection-start-column="18" selection-end-line="185" selection-end-column="18" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>

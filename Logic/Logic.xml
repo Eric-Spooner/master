@@ -44,29 +44,25 @@
       <index>3</index>
     </geometry>
 	
-    <transform type="linear">
-      <name>beforeTransform</name>
-      <label>Before Transform</label>
+    <transform>
+      <name>transform</name>
+      <label>transform</label>
       <channel>output</channel>
       <index>4</index>
-      <description><![CDATA[Before Transform]]></description>
+      <description><![CDATA[transform]]></description>
     </transform>
 	
-	<transform type="linear">
-      <name>rotationTransform</name>
-      <label>Rotation Transform</label>
-      <channel>output</channel>
-      <index>5</index>
-      <description><![CDATA[Output Volume]]></description>
-    </transform>
+  </parameters>
+  <parameters>
+    <label>Settings</label>
 	
-	<transform type="linear">
-      <name>afterTransform</name>
-      <label>After Transform</label>
-      <channel>output</channel>
-      <index>6</index>
-      <description><![CDATA[After Transform]]></description>
-    </transform>
-	
+	<integer>
+      <name>ComponentAlong</name>
+      <label>Component Along</label>
+	  <flag>-c</flag>
+	  <longflag>--component</longflag>
+      <description><![CDATA[ComponentFixed]]></description>
+	  <default>-1</default>
+    </integer>
   </parameters>
 </executable>

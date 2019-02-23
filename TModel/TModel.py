@@ -195,10 +195,10 @@ class TModelLogic(ScriptedLoadableModuleLogic):
     logging.info('Head extracted')
 
     # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
-    cliParams = {'InputVolume': inputVolume.GetID(), 'ComponentToRotate': 2,
+    cliParams = {'inputVolume': inputVolume.GetID(), 'ComponentToRotate': 2,
                  'ComponentFixed': 3, 'ArmaturePoly': armatureModel.GetID(),
                  'beforeTransform': beforeTransform, 'rotationTransform': rotationTransform,
-                 'afterTransfortm': afterTransform}
+                 'afterTransform': afterTransform}
     cliNode = slicer.cli.run(slicer.modules.logic, None, cliParams, wait_for_completion=True)
 
 

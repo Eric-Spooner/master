@@ -8,12 +8,13 @@
 
 // bender includes
 #include "benderIOUtils.h"
-#include "benderWeightMap.h"
-#include "benderWeightMapIO.h"
-#include "benderWeightMapMath.h"
 
 // ITK includes
 #include <itkDirectory.h>
+
+// VTK includes
+#include <vtkMatrix4x4.h>
+#include <vtkTransform.h>
 
 typedef itk::Matrix<double, 2, 4> Mat24;
 
@@ -41,23 +42,28 @@ typedef itk::Vector<double, 4> Vec4;
 //
 namespace
 {
-
 template<class T>
 int DoIt( int argc, char * argv[])
 {
   PARSE_ARGS;
 
+  typedef itk::ImageFileWriter<OutputImageType> WriterType;
 
   vtkSmartPointer<vtkPolyData> armature;
   armature.TakeReference(bender::IOUtils::ReadPolyData(ArmaturePoly.c_str(), false));
-  double restArmatureBounds[6] = { 0., -1., 0., -1., 0., -1. };
-  armature->GetBounds(restArmatureBounds);
-  std::cout << "Rest armature bounds: "
-	  << restArmatureBounds[0] << ", " << restArmatureBounds[1] << ", "
-	  << restArmatureBounds[2] << ", " << restArmatureBounds[3] << ", "
-	  << restArmatureBounds[4] << ", " << restArmatureBounds[5] << std::endl;
+  //double restArmatureBounds[6] = { 0., -1., 0., -1., 0., -1. };
+  //armature->GetBounds(restArmatureBounds);
+  //std::cout << "Rest armature bounds: "
+//	  << restArmatureBounds[0] << ", " << restArmatureBounds[1] << ", "
+	//  << restArmatureBounds[2] << ", " << restArmatureBounds[3] << ", "
+	//  << restArmatureBounds[4] << ", " << restArmatureBounds[5] << std::endl;
 
  
+  Vec3 fixedA;
+  Vec3 fixedB;
+  Vec3 rotateA;
+  Vec3 rotateB;
+
   vtkPoints* inPoints = armature->GetPoints();
   vtkCellArray* armatureSegments = armature->GetLines();
   vtkCellData* armatureCellData = armature->GetCellData();
@@ -65,12 +71,6 @@ int DoIt( int argc, char * argv[])
   armatureSegments->InitTraversal();
   int edgeId(0);
   int i = 2;
-  
-  Vec3 fixedA = new Vec3();
-  Vec3 fixedB = new Vec3();
-  Vec3 rotateA = new Vec3();
-  Vec3 rotateB = new Vec3();
-
   while (armatureSegments->GetNextCell(cell.GetPointer()))
   {
 	  vtkIdType a = cell->GetId(0);
@@ -79,42 +79,76 @@ int DoIt( int argc, char * argv[])
 	  Vec3 ax(inPoints->GetPoint(a));
 	  Vec3 bx(inPoints->GetPoint(b));
 
-	  if (i  == ComponentFixed) {
-
+	  if (i == ComponentFixed) {
+		  fixedA = ax;
+		  fixedB = bx;
 	  }
-	  if()
+	  if (i == ComponentToRotate) {
+		  rotateA = ax;
+		  rotateB = bx;
+	  }
+
+	  //std::cout << "Segment " << i << "A : " << ax << " B : " << bx<< std::endl;
+	  i++;
   }
 
-  ComponentFixed->
+  std::cout << "FixedPart " << ComponentFixed << "A : " << fixedA << " FixedPart B : " << fixedB << std::endl;
+  std::cout << "RotatePart " << ComponentToRotate << " A : " << rotateA << " RotatePart B : " << rotateB << std::endl;
+
+  Vec3 rotPart;
+  Vec3 fixedPart;
+  vtkSmartPointer<vtkMatrix4x4> beforeTransformMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
+  beforeTransformMatrix->Identity();
+  vtkSmartPointer<vtkMatrix4x4> afterTransformMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
+  afterTransformMatrix->Identity();
+
+  if (fixedA == rotateB) {
+	  rotPart = rotateA - fixedB;
+	  fixedPart = fixedA - fixedB;
+
+	  beforeTransformMatrix->SetElement(0, 3, -fixedA.GetElement(0));
+	  beforeTransformMatrix->SetElement(1, 3, -fixedA.GetElement(1));
+	  beforeTransformMatrix->SetElement(2, 3, -fixedA.GetElement(2));
+	  afterTransformMatrix->SetElement(0, 3, fixedA.GetElement(0));
+	  afterTransformMatrix->SetElement(1, 3, fixedA.GetElement(1));
+	  afterTransformMatrix->SetElement(2, 3, fixedA.GetElement(2));
+  }
+  else if (fixedB == rotateA) {
+	  rotPart = rotateB - fixedA;
+	  fixedPart = fixedB - fixedA;
+
+	  beforeTransformMatrix->SetElement(0,3,-fixedB.GetElement(0));
+	  beforeTransformMatrix->SetElement(1,3,-fixedB.GetElement(1));
+	  beforeTransformMatrix->SetElement(2,3,-fixedB.GetElement(2));
+	  afterTransformMatrix->SetElement(0, 3, fixedB.GetElement(0));
+	  afterTransformMatrix->SetElement(1, 3, fixedB.GetElement(1));
+	  afterTransformMatrix->SetElement(2, 3, fixedB.GetElement(2));
+  }
+
+  std::cout << "Two vecs: rot: " << rotPart << " fix: " << fixedPart << std::endl;
+  beforeTransformMatrix->PrintSelf(std::cout, *vtkIndent::New());
+  afterTransformMatrix->PrintSelf(std::cout, *vtkIndent::New());
+
+
+  vtkSmartPointer<vtkTransform> transfromBefore = vtkSmartPointer<vtkTransform>::New();
+ 
+  transfrom->SetMatrix(beforeTransformMatrix);
+  vtkSmartPointer<vtkTransform> transfromBefore = vtkSmartPointer<vtkTransform>::New();
+  transfrom->SetMatrix(beforeTransformMatrix);
+
+  typename WriterType::Pointer writer = WriterType::New();
+  itk::PluginFilterWatcher watchWriter(writer,
+	  "Write Transformation",
+	  CLPProcessInformation);
+  writer->SetFileName(beforeTransform.c_str());
+  writer->SetInput(beforeTransformMatrix);
+  writer->Update();
 
   return EXIT_SUCCESS;
 }
 
 } // end of anonymous namespace
 
-void GetRotationalPartAndFixedPart(vtkSmartPointer<vtkPolyData> armature, int fixed, int rotation, Vec3* fixedA, Vec3* fixedB, Vec3* rotateA, Vec3* rotateB) {
-}
-
-//----------------------------------------------------------------------------
-void GetWeightFileNames(const std::string& dirName, std::vector<std::string>& fnames)
-{
-	fnames.clear();
-	itk::Directory::Pointer dir = itk::Directory::New();
-	dir->Load(dirName.c_str());
-	for (unsigned int i = 0; i < dir->GetNumberOfFiles(); ++i)
-	{
-		std::string name = dir->GetFile(i);
-		if (strstr(name.c_str(), ".mha"))
-		{
-			std::string fname = dirName;
-			fname.append("/");
-			fname.append(name);
-			fnames.push_back(fname);
-		}
-	}
-
-	std::sort(fnames.begin(), fnames.end());
-}
 
 int main( int argc, char * argv[] )
 {
