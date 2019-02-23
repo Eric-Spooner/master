@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>Examples</category>
+  <title>Logic</title>
+  <description><![CDATA[This is a CLI module that can be bundled in an extension]]></description>
+  <version>0.0.1</version>
+  <documentation-url>http://www.example.com/Slicer/Modules/Logic</documentation-url>
+  <license>Slicer</license>
+  <contributor>Eric Moerth (Technical University of Vienna)</contributor>
+  <acknowledgements>Informatics Institute of Vienna and Visualisation Group</acknowledgements>
+  <parameters>
+    <label>IO</label>
+    <description><![CDATA[Input/output parameters]]></description>
+   
+   <image>
+      <name>inputVolume</name>
+      <label>Input Volume</label>
+      <channel>input</channel>
+      <index>0</index>
+      <description><![CDATA[Input volume]]></description>
+    </image>
+    
+	<integer>
+      <name>ComponentToRotate</name>
+      <label>Component To Rotate</label>
+	  <channel>input</channel>
+	  <index>1</index>
+      <description><![CDATA[ComponentToRotate]]></description>
+    </integer>
+	
+	<integer>
+      <name>ComponentFixed</name>
+      <label>Component Fixed</label>
+	  <channel>input</channel>
+	  <index>2</index>
+      <description><![CDATA[ComponentFixed]]></description>
+    </integer>
+	
+	<geometry>
+      <name>ArmaturePoly</name>
+      <label>Armature</label>
+      <description><![CDATA[Armature model containing the bone poses (i.e. 'Transforms' cell data array). The armature must 'fit' inside <b>Input Rest Labelmap</b>.]]></description>
+      <channel>input</channel>
+      <index>3</index>
+    </geometry>
+	
+    <transform type="linear">
+      <name>beforeTransform</name>
+      <label>Before Transform</label>
+      <channel>output</channel>
+      <index>4</index>
+      <description><![CDATA[Before Transform]]></description>
+    </transform>
+	
+	<transform type="linear">
+      <name>rotationTransform</name>
+      <label>Rotation Transform</label>
+      <channel>output</channel>
+      <index>5</index>
+      <description><![CDATA[Output Volume]]></description>
+    </transform>
+	
+	<transform type="linear">
+      <name>afterTransform</name>
+      <label>After Transform</label>
+      <channel>output</channel>
+      <index>6</index>
+      <description><![CDATA[After Transform]]></description>
+    </transform>
+	
+  </parameters>
+</executable>
