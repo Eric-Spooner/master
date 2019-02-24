@@ -1,3 +1,5 @@
+#define _USE_MATH_DEFINES
+
 #include "itkImageFileWriter.h"
 
 #include "itkSmoothingRecursiveGaussianImageFilter.h"
@@ -5,6 +7,8 @@
 #include "itkPluginUtilities.h"
 
 #include "LogicCLP.h"
+
+#include <math.h>
 
 // bender includes
 #include "benderIOUtils.h"
@@ -146,59 +150,103 @@ namespace
 
 		  std::cout << "Two vecs: rot: " << rotPart << " fix: " << fixedPart << std::endl;
 
-		  // Translate to origin
-		  transformPointer->Translate(-fixedPoint.GetElement(0), -fixedPoint.GetElement(1), -fixedPoint.GetElement(2));
-		 // transformPointer->PrintSelf(std::cout, *vtkIndent::New());
-
-		  // Rotation around XY:
-		  double va = atan2(rotPart.GetElement(0),rotPart.GetElement(1));
-		  double ua = atan2(fixedPart.GetElement(0), fixedPart.GetElement(1));
-		  double A = va - ua;
-		  A = A - 360 * (A > 180) + 360 * (A < -180);
-		  double thetaXY = -A;
-		  transformPointer->RotateZ(thetaXY);
-		//  transformPointer->PrintSelf(std::cout, *vtkIndent::New());
-
-		  // Rotation around YZ:
-		  va = atan2(rotPart.GetElement(1), rotPart.GetElement(2));
-		  ua = atan2(fixedPart.GetElement(1), fixedPart.GetElement(2));
-		  A = va - ua;
-		  A = A - 360 * (A > 180) + 360 * (A < -180);
-		  double thetaYZ = A;
-		  transformPointer->RotateX(thetaYZ);
-		  //transformPointer->PrintSelf(std::cout, *vtkIndent::New());
-
-		  // Rotation around XZ:
-		  va = atan2(rotPart.GetElement(0), rotPart.GetElement(2));
-		  ua = atan2(fixedPart.GetElement(0), fixedPart.GetElement(2));
-		  A = va - ua;
-		  A = A - 360 * (A > 180) + 360 * (A < -180);
-		  double thetaXZ = A;
-		  transformPointer->RotateY(thetaXZ);
-		 // transformPointer->PrintSelf(std::cout, *vtkIndent::New());
-
-		  // Translate Back
-		  transformPointer->Translate(fixedPoint.GetElement(0), fixedPoint.GetElement(1), fixedPoint.GetElement(2));
-		  transformPointer->PrintSelf(std::cout, *vtkIndent::New());
-
-		 
+		  /*
+			Translation and rotaion of the Rotational part according to the given fixed Part
+			done by using an affine transformation.
+		  */
 		  using TransformType = itk::AffineTransform< ScalarType, Dimension >;
-		  TransformType::Pointer transform = TransformType::New();
-		  vtkMatrix4x4* transformMatrix = transformPointer->GetMatrix();
-		  Mat33 mat33;
-		  for (int i = 0; i < 4; i++) {
-			  for (int j = 0; j < 4; j++) {
-				  mat33[i][j] = transformMatrix->GetElement(i, j);
-			  }
-		  }
-		  transform->SetMatrix(mat33);
+		  TransformType::Pointer transformTranslate1 = TransformType::New();
+
+		  // Translate to origin
+		  transformTranslate1->Translate(-fixedPoint, true);
+		  std::cout << "Translate origin: " << -fixedPoint << std::endl;
 
 		  const InputImageType::SizeType& size = reader->GetOutput()->GetLargestPossibleRegion().GetSize();
 		  using ResampleImageFilterType = itk::ResampleImageFilter< InputImageType, OutputImageType >;
+
+		  typename ResampleImageFilterType::Pointer resample1 = ResampleImageFilterType::New();
+		  resample1->SetInput(reader->GetOutput());
+		  resample1->SetTransform(transformTranslate1);
+		  resample1->SetReferenceImage(reader->GetOutput());
+		  resample1->UseReferenceImageOn();
+		  resample1->SetSize(size);
+
+		  /*
+			========
+			ROTATION BEGIN
+			=========
+		  */
+
+		  TransformType::Pointer transformRotate = TransformType::New();
+
+		  // Rotation around XY:
+		  double thetaXY = getTheta(rotPart.GetElement(0), rotPart.GetElement(1),
+			  fixedPart.GetElement(0), fixedPart.GetElement(1));
+		  std::cout << "thetaXY: " << thetaXY << std::endl;
+		  double axisZ[3] = { 0.0, 0.0, 1.0 };
+		  transformRotate->Rotate3D(Vec3(axisZ), thetaXY, false);
+
+		  // calculate the new coordinates of the rotational part in order to carry on with rotational calculation
+		  double arrayRz[3][3] = { {cos(thetaXY), sin(thetaXY), 0},
+								{-sin(thetaXY),cos(thetaXY),0},
+								{ 0,0,1}};
+		  Mat33 Rz = ToItkMatrix(arrayRz);
+		  rotPart = Rz*rotPart;
+
+		  std::cout << "rotPart: " << rotPart << std::endl;
+
+		  // Rotation around YZ:
+		  double thetaYZ = getTheta(rotPart.GetElement(1), rotPart.GetElement(2),
+			  fixedPart.GetElement(1), fixedPart.GetElement(2));
+		  std::cout << "thetaYZ: " << thetaYZ << std::endl;
+		  double axisX[3] = { 1.0, 0.0, 0.0 };
+		  transformRotate->Rotate3D(Vec3(axisX), thetaYZ, false);
+
+		  // calculate the new coordinates of the rotational part in order to carry on with rotational calculation
+		  double arrayRx[3][3] = { {1, 0, 0},
+								{0,cos(thetaYZ),sin(thetaYZ)},
+								{0,-sin(thetaYZ),cos(thetaYZ)}};
+		  Mat33 Rx = ToItkMatrix(arrayRx);
+		  rotPart = Rx * rotPart;
+
+		  std::cout << "rotPart: " << rotPart << std::endl;
+		  
+		  // Rotation around XZ:
+		  double thetaXZ = -getTheta(rotPart.GetElement(0), rotPart.GetElement(2),
+			  fixedPart.GetElement(0), fixedPart.GetElement(2));
+		  std::cout << "thetaXZ: " << thetaXZ << std::endl;
+		  double axisY[3] = { 0.0, 1.0, 0.0 };
+		  transformRotate->Rotate3D(Vec3(axisY), thetaXZ, false);
+
+		  typename ResampleImageFilterType::Pointer resample2 = ResampleImageFilterType::New();
+		  resample2->SetInput(resample1->GetOutput());
+		  resample2->SetTransform(transformRotate);
+		  resample2->SetReferenceImage(resample1->GetOutput());
+		  resample2->UseReferenceImageOn();
+		  resample2->SetSize(size);
+
+		  /*
+			========
+			ROTATION END
+			=========
+		  */
+
+		  // Translate Back
+		  TransformType::Pointer transformTranslate2 = TransformType::New();
+		  transformTranslate2->Translate(fixedPoint);
+		  std::cout << "Translate origin: " << fixedPoint << std::endl;
+
+		  /*
+			Translation and rotation finished
+		  */
+
+		  /*
+			Result Resampling and writing
+		  */
 		  typename ResampleImageFilterType::Pointer resample = ResampleImageFilterType::New();
-		  resample->SetInput(reader->GetOutput());
-		  resample->SetTransform(transform);
-		  resample->SetReferenceImage(reader->GetOutput());
+		  resample->SetInput(resample2->GetOutput());
+		  resample->SetTransform(transformTranslate2);
+		  resample->SetReferenceImage(resample2->GetOutput());
 		  resample->UseReferenceImageOn();
 		  resample->SetSize(size);
 
@@ -217,6 +265,30 @@ namespace
 
 } // end of anonymous namespace
 
+
+double getTheta(double vx, double vy, double ux, double uy) {
+	double va = -atan2(vx, vy)*180.0 / M_PI;
+	double ua = -atan2(ux, uy)*180.0 / M_PI;
+	double A = va - ua;
+	A = A - 360 * (A > 180) + 360 * (A < -180);
+	std::cout << "vx: " << vx << " vy: " << vy << " va : " << va
+		<< " ux: " << ux << " uy: " << uy <<  " ua: " << ua << std::endl;
+	return A * M_PI / 180;
+}
+
+Mat33 ToItkMatrix(double M[3][3])
+{
+	Mat33 itkM;
+	for (int i = 0; i < 3; ++i)
+	{
+		for (int j = 0; j < 3; ++j)
+		{
+			itkM(i, j) = M[i][j];
+		}
+	}
+
+	return itkM;
+}
 
 int main( int argc, char * argv[] )
 {
