@@ -12,6 +12,7 @@
 // ITK includes
 #include <itkDirectory.h>
 #include <itkImageTransformer.h>
+#include <itkAffineTransform.h>
 #include <itkResampleImageFilter.h>
 
 // VTK includes
@@ -53,14 +54,30 @@ namespace
 	{
 		  PARSE_ARGS;
 
-		  std::cout << "Read input image";
+		  
+		  typedef    T InputPixelType;
+		  typedef    T OutputPixelType;
 
-		  vtkSmartPointer<vtkNrrdReader> reader = vtkSmartPointer<vtkNrrdReader>::New();
+		  typedef itk::Image<InputPixelType, 3> InputImageType;
+		  typedef itk::Image<OutputPixelType, 3> OutputImageType;
+
+		  typedef itk::ImageFileReader<InputImageType>  ReaderType;
+		  typedef itk::ImageFileWriter<OutputImageType> WriterType;
+
+		  typedef itk::ResampleImageFilter<InputImageType, OutputImageType>                                    ResampleType;
+
+		  typename ReaderType::Pointer reader = ReaderType::New();
+		  itk::PluginFilterWatcher watchReader(reader, "Read Volume",
+			  CLPProcessInformation);
+
+		  using ScalarType = double;
+		  constexpr unsigned int Dimension = 3;
+
 		  reader->SetFileName(inputVolume.c_str());
+		  
+		  std::cout << "Read input image" << std::endl;
 		  reader->Update();
-
-		  std::cout << "Input Image read: fname: " << inputVolume << " result: " << reader->GetOutput() << std::endl;
-
+		  std::cout << "Input image read" << std::endl;
 		  //
 		  // READ ARMATURE
 		  //
@@ -116,7 +133,6 @@ namespace
 		  Vec3 fixedPoint;
 		  vtkSmartPointer<vtkTransform> transformPointer = vtkSmartPointer<vtkTransform>::New();
   
-
 		  if (fixedA == rotateB) {
 			  rotPart = rotateA - fixedB;
 			  fixedPart = fixedA - fixedB;
@@ -165,19 +181,37 @@ namespace
 		  transformPointer->Translate(fixedPoint.GetElement(0), fixedPoint.GetElement(1), fixedPoint.GetElement(2));
 		  transformPointer->PrintSelf(std::cout, *vtkIndent::New());
 
-		  // Apply Transformation to the Input Image
-		  vtkSmartPointer<vtkTransformFilter> transformFilter = vtkSmartPointer<vtkTransformFilter>::New();
-		  transformFilter->SetTransform(transformPointer);
-		  transformFilter->SetInputData((vtkDataObject*)reader->GetOutput());
-
-		  // Write the applied transformation to the Output Image
-		  vtkSmartPointer<vtkImageWriter> writer = vtkSmartPointer<vtkImageWriter>::New();
-		  writer->SetFileName(outputVolume.c_str());
-		  writer->SetInputData(transformFilter->GetOutput());
-		  writer->Write();
-
-		  std::cout << "Wrote output image, fname: " << outputVolume << " filter output:" << transformFilter->GetOutput() << std::endl;
 		 
+		  using TransformType = itk::AffineTransform< ScalarType, Dimension >;
+		  TransformType::Pointer transform = TransformType::New();
+		  vtkMatrix4x4* transformMatrix = transformPointer->GetMatrix();
+		  Mat33 mat33;
+		  for (int i = 0; i < 4; i++) {
+			  for (int j = 0; j < 4; j++) {
+				  mat33[i][j] = transformMatrix->GetElement(i, j);
+			  }
+		  }
+		  transform->SetMatrix(mat33);
+
+		  const InputImageType::SizeType& size = reader->GetOutput()->GetLargestPossibleRegion().GetSize();
+		  using ResampleImageFilterType = itk::ResampleImageFilter< InputImageType, OutputImageType >;
+		  typename ResampleImageFilterType::Pointer resample = ResampleImageFilterType::New();
+		  resample->SetInput(reader->GetOutput());
+		  resample->SetTransform(transform);
+		  resample->SetReferenceImage(reader->GetOutput());
+		  resample->UseReferenceImageOn();
+		  resample->SetSize(size);
+
+		  typename WriterType::Pointer writer = WriterType::New();
+		  itk::PluginFilterWatcher watchWriter(writer,
+			  "Write Volume",
+			  CLPProcessInformation);
+		  writer->SetFileName(outputVolume.c_str());
+		  writer->SetInput(resample->GetOutput());
+		  writer->SetUseCompression(1);
+		  writer->Update();
+
+
 		  return EXIT_SUCCESS;
 	}
 

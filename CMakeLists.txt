@@ -21,7 +21,6 @@ include(${Slicer_USE_FILE})
 # Extension modules
 add_subdirectory(TModel)
 add_subdirectory(Logic)
-add_subdirectory(RotationAroundPoint)
 ## NEXT_MODULE
 
 #-----------------------------------------------------------------------------
