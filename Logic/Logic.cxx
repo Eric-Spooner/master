@@ -11,10 +11,16 @@
 
 // ITK includes
 #include <itkDirectory.h>
+#include <itkImageTransformer.h>
+#include <itkResampleImageFilter.h>
 
 // VTK includes
 #include <vtkMatrix4x4.h>
 #include <vtkTransform.h>
+#include <vtkTransformFilter.h>
+#include <vtkVolume.h>
+#include <vtkNrrdReader.h>
+#include <vtkImageWriter.h>
 
 typedef itk::Matrix<double, 2, 4> Mat24;
 
@@ -42,110 +48,138 @@ typedef itk::Vector<double, 4> Vec4;
 //
 namespace
 {
-template<class T>
-int DoIt( int argc, char * argv[])
-{
-  PARSE_ARGS;
+	template<class T>
+	int DoIt( int argc, char * argv[])
+	{
+		  PARSE_ARGS;
 
-  typedef itk::ImageFileWriter<OutputImageType> WriterType;
+		  std::cout << "Read input image";
 
-  vtkSmartPointer<vtkPolyData> armature;
-  armature.TakeReference(bender::IOUtils::ReadPolyData(ArmaturePoly.c_str(), false));
-  //double restArmatureBounds[6] = { 0., -1., 0., -1., 0., -1. };
-  //armature->GetBounds(restArmatureBounds);
-  //std::cout << "Rest armature bounds: "
-//	  << restArmatureBounds[0] << ", " << restArmatureBounds[1] << ", "
-	//  << restArmatureBounds[2] << ", " << restArmatureBounds[3] << ", "
-	//  << restArmatureBounds[4] << ", " << restArmatureBounds[5] << std::endl;
+		  vtkSmartPointer<vtkNrrdReader> reader = vtkSmartPointer<vtkNrrdReader>::New();
+		  reader->SetFileName(inputVolume.c_str());
+		  reader->Update();
+
+		  std::cout << "Input Image read: fname: " << inputVolume << " result: " << reader->GetOutput() << std::endl;
+
+		  //
+		  // READ ARMATURE
+		  //
+
+		  vtkSmartPointer<vtkPolyData> armature;
+		  armature.TakeReference(bender::IOUtils::ReadPolyData(ArmaturePoly.c_str(), false));
+		  //double restArmatureBounds[6] = { 0., -1., 0., -1., 0., -1. };
+		  //armature->GetBounds(restArmatureBounds);
+		  //std::cout << "Rest armature bounds: "
+		//	  << restArmatureBounds[0] << ", " << restArmatureBounds[1] << ", "
+			//  << restArmatureBounds[2] << ", " << restArmatureBounds[3] << ", "
+			//  << restArmatureBounds[4] << ", " << restArmatureBounds[5] << std::endl;
 
  
-  Vec3 fixedA;
-  Vec3 fixedB;
-  Vec3 rotateA;
-  Vec3 rotateB;
+		  Vec3 fixedA;
+		  Vec3 fixedB;
+		  Vec3 rotateA;
+		  Vec3 rotateB;
 
-  vtkPoints* inPoints = armature->GetPoints();
-  vtkCellArray* armatureSegments = armature->GetLines();
-  vtkCellData* armatureCellData = armature->GetCellData();
-  vtkNew<vtkIdList> cell;
-  armatureSegments->InitTraversal();
-  int edgeId(0);
-  int i = 2;
-  while (armatureSegments->GetNextCell(cell.GetPointer()))
-  {
-	  vtkIdType a = cell->GetId(0);
-	  vtkIdType b = cell->GetId(1);
+		  vtkPoints* inPoints = armature->GetPoints();
+		  vtkCellArray* armatureSegments = armature->GetLines();
+		  vtkCellData* armatureCellData = armature->GetCellData();
+		  vtkNew<vtkIdList> cell;
+		  armatureSegments->InitTraversal();
+		  int edgeId(0);
+		  int i = 2;
+		  while (armatureSegments->GetNextCell(cell.GetPointer()))
+		  {
+			  vtkIdType a = cell->GetId(0);
+			  vtkIdType b = cell->GetId(1);
 
-	  Vec3 ax(inPoints->GetPoint(a));
-	  Vec3 bx(inPoints->GetPoint(b));
+			  Vec3 ax(inPoints->GetPoint(a));
+			  Vec3 bx(inPoints->GetPoint(b));
 
-	  if (i == ComponentFixed) {
-		  fixedA = ax;
-		  fixedB = bx;
-	  }
-	  if (i == ComponentToRotate) {
-		  rotateA = ax;
-		  rotateB = bx;
-	  }
+			  if (i == ComponentFixed) {
+				  fixedA = ax;
+				  fixedB = bx;
+			  }
+			  if (i == ComponentToRotate) {
+				  rotateA = ax;
+				  rotateB = bx;
+			  }
 
-	  //std::cout << "Segment " << i << "A : " << ax << " B : " << bx<< std::endl;
-	  i++;
-  }
+			  //std::cout << "Segment " << i << "A : " << ax << " B : " << bx<< std::endl;
+			  i++;
+		  }
 
-  std::cout << "FixedPart " << ComponentFixed << "A : " << fixedA << " FixedPart B : " << fixedB << std::endl;
-  std::cout << "RotatePart " << ComponentToRotate << " A : " << rotateA << " RotatePart B : " << rotateB << std::endl;
+		  std::cout << "FixedPart " << ComponentFixed << "A : " << fixedA << " FixedPart B : " << fixedB << std::endl;
+		  std::cout << "RotatePart " << ComponentToRotate << " A : " << rotateA << " RotatePart B : " << rotateB << std::endl;
 
-  Vec3 rotPart;
-  Vec3 fixedPart;
-  vtkSmartPointer<vtkMatrix4x4> beforeTransformMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
-  beforeTransformMatrix->Identity();
-  vtkSmartPointer<vtkMatrix4x4> afterTransformMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
-  afterTransformMatrix->Identity();
+		  Vec3 rotPart;
+		  Vec3 fixedPart;
+		  Vec3 fixedPoint;
+		  vtkSmartPointer<vtkTransform> transformPointer = vtkSmartPointer<vtkTransform>::New();
+  
 
-  if (fixedA == rotateB) {
-	  rotPart = rotateA - fixedB;
-	  fixedPart = fixedA - fixedB;
+		  if (fixedA == rotateB) {
+			  rotPart = rotateA - fixedB;
+			  fixedPart = fixedA - fixedB;
+			  fixedPoint = fixedA;
+		  }
+		  else if (fixedB == rotateA) {
+			  rotPart = rotateB - fixedA;
+			  fixedPart = fixedB - fixedA;
+			  fixedPoint = fixedB;
+		  }
 
-	  beforeTransformMatrix->SetElement(0, 3, -fixedA.GetElement(0));
-	  beforeTransformMatrix->SetElement(1, 3, -fixedA.GetElement(1));
-	  beforeTransformMatrix->SetElement(2, 3, -fixedA.GetElement(2));
-	  afterTransformMatrix->SetElement(0, 3, fixedA.GetElement(0));
-	  afterTransformMatrix->SetElement(1, 3, fixedA.GetElement(1));
-	  afterTransformMatrix->SetElement(2, 3, fixedA.GetElement(2));
-  }
-  else if (fixedB == rotateA) {
-	  rotPart = rotateB - fixedA;
-	  fixedPart = fixedB - fixedA;
+		  std::cout << "Two vecs: rot: " << rotPart << " fix: " << fixedPart << std::endl;
 
-	  beforeTransformMatrix->SetElement(0,3,-fixedB.GetElement(0));
-	  beforeTransformMatrix->SetElement(1,3,-fixedB.GetElement(1));
-	  beforeTransformMatrix->SetElement(2,3,-fixedB.GetElement(2));
-	  afterTransformMatrix->SetElement(0, 3, fixedB.GetElement(0));
-	  afterTransformMatrix->SetElement(1, 3, fixedB.GetElement(1));
-	  afterTransformMatrix->SetElement(2, 3, fixedB.GetElement(2));
-  }
+		  // Translate to origin
+		  transformPointer->Translate(-fixedPoint.GetElement(0), -fixedPoint.GetElement(1), -fixedPoint.GetElement(2));
+		 // transformPointer->PrintSelf(std::cout, *vtkIndent::New());
 
-  std::cout << "Two vecs: rot: " << rotPart << " fix: " << fixedPart << std::endl;
-  beforeTransformMatrix->PrintSelf(std::cout, *vtkIndent::New());
-  afterTransformMatrix->PrintSelf(std::cout, *vtkIndent::New());
+		  // Rotation around XY:
+		  double va = atan2(rotPart.GetElement(0),rotPart.GetElement(1));
+		  double ua = atan2(fixedPart.GetElement(0), fixedPart.GetElement(1));
+		  double A = va - ua;
+		  A = A - 360 * (A > 180) + 360 * (A < -180);
+		  double thetaXY = -A;
+		  transformPointer->RotateZ(thetaXY);
+		//  transformPointer->PrintSelf(std::cout, *vtkIndent::New());
 
+		  // Rotation around YZ:
+		  va = atan2(rotPart.GetElement(1), rotPart.GetElement(2));
+		  ua = atan2(fixedPart.GetElement(1), fixedPart.GetElement(2));
+		  A = va - ua;
+		  A = A - 360 * (A > 180) + 360 * (A < -180);
+		  double thetaYZ = A;
+		  transformPointer->RotateX(thetaYZ);
+		  //transformPointer->PrintSelf(std::cout, *vtkIndent::New());
 
-  vtkSmartPointer<vtkTransform> transfromBefore = vtkSmartPointer<vtkTransform>::New();
- 
-  transfrom->SetMatrix(beforeTransformMatrix);
-  vtkSmartPointer<vtkTransform> transfromBefore = vtkSmartPointer<vtkTransform>::New();
-  transfrom->SetMatrix(beforeTransformMatrix);
+		  // Rotation around XZ:
+		  va = atan2(rotPart.GetElement(0), rotPart.GetElement(2));
+		  ua = atan2(fixedPart.GetElement(0), fixedPart.GetElement(2));
+		  A = va - ua;
+		  A = A - 360 * (A > 180) + 360 * (A < -180);
+		  double thetaXZ = A;
+		  transformPointer->RotateY(thetaXZ);
+		 // transformPointer->PrintSelf(std::cout, *vtkIndent::New());
 
-  typename WriterType::Pointer writer = WriterType::New();
-  itk::PluginFilterWatcher watchWriter(writer,
-	  "Write Transformation",
-	  CLPProcessInformation);
-  writer->SetFileName(beforeTransform.c_str());
-  writer->SetInput(beforeTransformMatrix);
-  writer->Update();
+		  // Translate Back
+		  transformPointer->Translate(fixedPoint.GetElement(0), fixedPoint.GetElement(1), fixedPoint.GetElement(2));
+		  transformPointer->PrintSelf(std::cout, *vtkIndent::New());
 
-  return EXIT_SUCCESS;
-}
+		  // Apply Transformation to the Input Image
+		  vtkSmartPointer<vtkTransformFilter> transformFilter = vtkSmartPointer<vtkTransformFilter>::New();
+		  transformFilter->SetTransform(transformPointer);
+		  transformFilter->SetInputData((vtkDataObject*)reader->GetOutput());
+
+		  // Write the applied transformation to the Output Image
+		  vtkSmartPointer<vtkImageWriter> writer = vtkSmartPointer<vtkImageWriter>::New();
+		  writer->SetFileName(outputVolume.c_str());
+		  writer->SetInputData(transformFilter->GetOutput());
+		  writer->Write();
+
+		  std::cout << "Wrote output image, fname: " << outputVolume << " filter output:" << transformFilter->GetOutput() << std::endl;
+		 
+		  return EXIT_SUCCESS;
+	}
 
 } // end of anonymous namespace
 

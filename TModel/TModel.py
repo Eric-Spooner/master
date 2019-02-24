@@ -188,17 +188,14 @@ class TModelLogic(ScriptedLoadableModuleLogic):
                  'Lower': 2, 'Upper': 2, 'ThresholdType': 'Outside'}
     cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True)
 
-    beforeTransform = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLinearTransformNode", "before")
-    rotationTransform = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLinearTransformNode", "rotate")
-    afterTransform = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLinearTransformNode", "after")
+    transform = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLinearTransformNode", "transform")
 
     logging.info('Head extracted')
 
     # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
     cliParams = {'inputVolume': inputVolume.GetID(), 'ComponentToRotate': 2,
                  'ComponentFixed': 3, 'ArmaturePoly': armatureModel.GetID(),
-                 'beforeTransform': beforeTransform, 'rotationTransform': rotationTransform,
-                 'afterTransform': afterTransform}
+                 'outputVolume': outputVolume.GetID()}
     cliNode = slicer.cli.run(slicer.modules.logic, None, cliParams, wait_for_completion=True)
 
 
