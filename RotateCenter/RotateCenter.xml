@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>Examples</category>
+  <title>RotateCenter</title>
+  <description><![CDATA[This is a CLI module that can be bundled in an extension]]></description>
+  <version>0.0.1</version>
+  <documentation-url>http://www.example.com/Slicer/Modules/RotateCenter</documentation-url>
+  <license>Slicer</license>
+  <contributor>FirstName LastName (Institution), FirstName LastName (Institution)</contributor>
+  <acknowledgements>This work was partially funded by NIH grant NXNNXXNNNNNN-NNXN</acknowledgements>
+  <parameters>
+    <label>IO</label>
+    <description><![CDATA[Input/output parameters]]></description>
+    <image>
+      <name>inputVolume</name>
+      <label>Input Volume</label>
+      <channel>input</channel>
+      <index>0</index>
+      <description><![CDATA[Input volume]]></description>
+    </image>
+	    
+	<double>
+      <name>Rx</name>
+      <label>Rotate X</label>
+	  <channel>input</channel>
+	  <index>1</index>
+      <description><![CDATA[RotateX]]></description>
+    </double>
+	
+	<double>
+      <name>Ry</name>
+      <label>Rotate Y</label>
+	  <channel>input</channel>
+	  <index>2</index>
+      <description><![CDATA[RotateY]]></description>
+    </double>
+	
+	<double>
+      <name>Rz</name>
+      <label>Rotate Z</label>
+	  <channel>input</channel>
+	  <index>3</index>
+      <description><![CDATA[RotateZ]]></description>
+    </double>
+	    
+	<double>
+      <name>Cx</name>
+      <label>Center X</label>
+	  <channel>input</channel>
+	  <index>4</index>
+      <description><![CDATA[CenterX]]></description>
+    </double>
+	
+	<double>
+      <name>Cy</name>
+      <label>Center Y</label>
+	  <channel>input</channel>
+	  <index>5</index>
+      <description><![CDATA[CenterY]]></description>
+    </double>
+	
+	<double>
+      <name>Cz</name>
+      <label>Center Z</label>
+	  <channel>input</channel>
+	  <index>6</index>
+      <description><![CDATA[CenterZ]]></description>
+    </double>
+	
+    <image>
+      <name>outputVolume</name>
+      <label>Output Volume</label>
+      <channel>output</channel>
+      <index>7</index>
+      <description><![CDATA[Output Volume]]></description>
+    </image>
+	
+  </parameters>
+	<parameters>
+    <label>settings</label>
+    <description><![CDATA[Settings parameters]]></description>
+	<boolean>
+      <name>NegateRx</name>
+      <label>Negate Rx</label>
+      <flag>-x</flag>
+      <longflag>--negateRX</longflag>
+      <description><![CDATA[Swap the outside value with the inside value.]]></description>
+      <default>false</default>
+    </boolean>
+	<boolean>
+      <name>NegateRy</name>
+      <label>Negate Ry</label>
+      <flag>-y</flag>
+      <longflag>--negateRY</longflag>
+      <description><![CDATA[Swap the outside value with the inside value.]]></description>
+      <default>false</default>
+    </boolean>
+	<boolean>
+      <name>NegateRz</name>
+      <label>Negate Rz</label>
+      <flag>-z</flag>
+      <longflag>--negateRZ</longflag>
+      <description><![CDATA[Swap the outside value with the inside value.]]></description>
+      <default>false</default>
+    </boolean>
+	<boolean>
+      <name>NegateCx</name>
+      <label>Negate Cx</label>
+      <flag>-a</flag>
+      <longflag>--negateCX</longflag>
+      <description><![CDATA[Swap the outside value with the inside value.]]></description>
+      <default>false</default>
+    </boolean>
+	<boolean>
+      <name>NegateCy</name>
+      <label>Negate Cy</label>
+      <flag>-b</flag>
+      <longflag>--negateCY</longflag>
+      <description><![CDATA[Swap the outside value with the inside value.]]></description>
+      <default>false</default>
+    </boolean>
+	<boolean>
+      <name>NegateCz</name>
+      <label>Negate Cz</label>
+      <flag>-c</flag>
+      <longflag>--negateCZ</longflag>
+      <description><![CDATA[Swap the outside value with the inside value.]]></description>
+      <default>false</default>
+    </boolean>
+  </parameters>
+</executable>

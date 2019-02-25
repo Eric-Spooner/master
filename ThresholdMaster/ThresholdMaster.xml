@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>Examples</category>
+  <title>ThresholdMaster</title>
+  <description><![CDATA[This is a CLI module that can be bundled in an extension]]></description>
+  <version>0.0.1</version>
+  <documentation-url>http://www.example.com/Slicer/Modules/ThresholdMaster</documentation-url>
+  <license>Slicer</license>
+  <contributor>FirstName LastName (Institution), FirstName LastName (Institution)</contributor>
+  <acknowledgements>This work was partially funded by NIH grant NXNNXXNNNNNN-NNXN</acknowledgements>
+  <parameters>
+    <label>IO</label>
+    <description><![CDATA[Input/output parameters]]></description>
+    <image>
+      <name>InputVolume</name>
+      <label>Input Volume</label>
+      <channel>input</channel>
+      <index>0</index>
+      <description><![CDATA[Input volume]]></description>
+    </image>
+    <image reference="InputVolume">
+      <name>OutputVolume</name>
+      <label>Output Volume</label>
+      <channel>output</channel>
+      <index>1</index>
+      <description><![CDATA[Thresholded input volume]]></description>
+    </image>
+  </parameters>
+  <parameters>
+    <label>Filter Settings</label>
+    <string-enumeration>
+      <name>ThresholdType</name>
+      <label>Threshold Type</label>
+      <description><![CDATA[What kind of threshold to perform. If Outside is selected, uses Upper and Lower values. If Below is selected, uses the ThresholdValue, if Above is selected, uses the ThresholdValue.]]></description>
+      <longflag>--thresholdtype</longflag>
+      <default>Outside</default>
+      <element>Below</element>
+      <element>Above</element>
+      <element>Outside</element>
+    </string-enumeration>
+    <float>
+      <name>ThresholdValue</name>
+      <label>Threshold Value</label>
+      <flag>-t</flag>
+      <longflag>--threshold</longflag>
+      <description><![CDATA[Threshold value]]></description>
+      <default>128</default>
+    </float>
+    <float>
+      <name>Lower</name>
+      <label>Lower</label>
+      <flag>-l</flag>
+      <longflag>--lower</longflag>
+      <description><![CDATA[Lower threshold value]]></description>
+      <default>1</default>
+    </float>
+    <float>
+      <name>Upper</name>
+      <label>Upper</label>
+      <flag>-u</flag>
+      <longflag>--upper</longflag>
+      <description><![CDATA[Upper threshold value]]></description>
+      <default>200</default>
+    </float>
+    <float>
+      <name>OutsideValue</name>
+      <label>Outside Value</label>
+      <flag>-v</flag>
+      <longflag>--outsidevalue</longflag>
+      <description><![CDATA[Set the voxels to this value if they fall outside the threshold range]]></description>
+      <default>0</default>
+    </float>
+    <boolean>
+      <name>Negate</name>
+      <label>Negate Threshold</label>
+      <flag>-n</flag>
+      <longflag>--negate</longflag>
+      <description><![CDATA[Swap the outside value with the inside value.]]></description>
+      <default>false</default>
+    </boolean>
+  </parameters>
+</executable>

@@ -125,8 +125,8 @@ namespace
 				rotateA = ax;
 				rotateB = bx;
 			}
-
-			//std::cout << "Segment " << i << "A : " << ax << " B : " << bx<< std::endl;
+			 
+			std::cout << "Segment " << i << " A : " << ax << " B : " << bx<< std::endl;
 			i++;
 		}
 
@@ -158,31 +158,18 @@ namespace
 		using TransformType = itk::CenteredEuler3DTransform<ScalarType>;
 		TransformType::Pointer eulerTransform = TransformType::New();
 
-		//using ParameterType = itk::Euler3DTransform<ScalarType>::FixedParametersType;
-
-		// Translate to origin
-//		  transformTranslate1->Translate(-fixedPoint, true);
-		std::cout << "Translate origin: " << -fixedPoint << std::endl;
-
 		const InputImageType::SizeType& size = reader->GetOutput()->GetLargestPossibleRegion().GetSize();
 		using ResampleImageFilterType = itk::ResampleImageFilter< InputImageType, OutputImageType >;
 
-		//	  typename ResampleImageFilterType::Pointer resample1 = ResampleImageFilterType::New();
-		//	  resample1->SetInput(reader->GetOutput());
-		//	  resample1->SetTransform(transformTranslate1);
-		//	  resample1->SetReferenceImage(reader->GetOutput());
-		//	  resample1->UseReferenceImageOn();
-		//	  resample1->SetSize(size);
+		/*
+		  ========
+		  ROTATION BEGIN
+		  =========
+		*/
 
-			  /*
-				========
-				ROTATION BEGIN
-				=========
-			  */
+		//  TransformType::Pointer transformRotate = TransformType::New();
 
-			  //  TransformType::Pointer transformRotate = TransformType::New();
-
-				// Rotation around XY:
+		  // Rotation around XY:
 		double thetaXY = getTheta(rotPart.GetElement(0), rotPart.GetElement(1),
 			fixedPart.GetElement(0), fixedPart.GetElement(1));
 		std::cout << "thetaXY: " << thetaXY << std::endl;
@@ -195,7 +182,6 @@ namespace
 							  { 0,0,1} };
 		Mat33 Rz = ToItkMatrix(arrayRz);
 		rotPart = Rz * rotPart;
-
 		std::cout << "rotPart: " << rotPart << std::endl;
 
 		// Rotation around YZ:
@@ -203,15 +189,13 @@ namespace
 			fixedPart.GetElement(1), fixedPart.GetElement(2));
 		std::cout << "thetaYZ: " << thetaYZ << std::endl;
 		double axisX[3] = { 1.0, 0.0, 0.0 };
-		//  transformRotate->Rotate3D(Vec3(axisX), thetaYZ, false);
 
-		  // calculate the new coordinates of the rotational part in order to carry on with rotational calculation
+		// calculate the new coordinates of the rotational part in order to carry on with rotational calculation
 		double arrayRx[3][3] = { {1, 0, 0},
 							  {0,cos(thetaYZ),sin(thetaYZ)},
 							  {0,-sin(thetaYZ),cos(thetaYZ)} };
 		Mat33 Rx = ToItkMatrix(arrayRx);
 		rotPart = Rx * rotPart;
-
 		std::cout << "rotPart: " << rotPart << std::endl;
 
 		// Rotation around XZ:
@@ -219,91 +203,31 @@ namespace
 			fixedPart.GetElement(0), fixedPart.GetElement(2));
 		std::cout << "thetaXZ: " << thetaXZ << std::endl;
 		double axisY[3] = { 0.0, 1.0, 0.0 };
-		// transformRotate->Rotate3D(Vec3(axisY), thetaXZ, false);
 
-		 //typename ResampleImageFilterType::Pointer resample2 = ResampleImageFilterType::New();
-		 //resample2->SetInput(resample1->GetOutput());
-		 //resample2->SetTransform(transformRotate);
-		 //resample2->SetReferenceImage(resample1->GetOutput());
-		 //resample2->UseReferenceImageOn();
-		 //resample2->SetSize(size);
+		/*
+		  ========
+		  ROTATION END
+		  =========
+		*/
+		double parametersArray[9] = { -thetaYZ, thetaXZ, -thetaXY, abs(fixedPoint[0]),abs(fixedPoint[1]), abs(fixedPoint[2]), 0,0,0 };
 
-		 /*
-		   ========
-		   ROTATION END
-		   =========
-		 */
+		//Nack correction
+		/*if (ComponentToRotate == 3) {
+			parametersArray[0] = -parametersArray[0];
+		}*/
 
-		 // Translate Back
-		// TransformType::Pointer transformTranslate2 = TransformType::New();
-	   //  transformTranslate2->Translate(fixedPoint);
-		std::cout << "Translate origin: " << fixedPoint << std::endl;
-
-
-
-		//ParameterType eulerFixedParameters = ParameterType(fixedPoint);
-		//eulerTransform->SetFixedParameters(eulerFixedParameters);
+		TransformType::ParametersType params(9);
+		for (int i = 0; i < 9; i++) {
+			params[i] = parametersArray[i];
+		}
+		eulerTransform->SetParameters(params);
 		//eulerTransform->SetCenter(fixedPoint);
-	  //  eulerTransform->TransformPoint(fixedPoint);
-	  //  eulerTransform->SetCenter(fixedPoint);
-		if (ComponentAlong == -1) {
-			double parametersArray[9] = { thetaYZ, thetaXZ, thetaXY, fixedPoint[0] / 2.0, fixedPoint[1] / 2.0, fixedPoint[2] / 2.0, 0,0,0 };
-			TransformType::ParametersType params(9);
-			for (int i = 0; i < 9; i++) {
-				params[i] = parametersArray[i];
-			}
-			eulerTransform->SetParameters(params);
-			eulerTransform->SetCenter(fixedPoint / 2);
-			std::cout << "Euler Transform with Center Set to half fixed Point";
-			eulerTransform->Print(std::cout);
-		}
-		else if (ComponentAlong == 1) {
-			double parametersArray[9] = { thetaYZ, thetaXZ, thetaXY, fixedPoint[0], fixedPoint[1], fixedPoint[2], 0,0,0 };
-			TransformType::ParametersType params(9);
-			for (int i = 0; i < 9; i++) {
-				params[i] = parametersArray[i];
-			}
-			eulerTransform->SetParameters(params);
-			eulerTransform->SetCenter(fixedPoint);
-			std::cout << "Euler Transform with Center Set to fixed Point";
-			eulerTransform->Print(std::cout);
-		}else if (ComponentAlong == 2) {
-			double parametersArray[9] = { thetaYZ, thetaXZ, thetaXY, 0, 0,0, 0,0,0 };
-			TransformType::ParametersType params(9);
-			for (int i = 0; i < 9; i++) {
-				params[i] = parametersArray[i];
-			}
-			eulerTransform->SetParameters(params);
-			eulerTransform->SetCenter(fixedPoint);
-			std::cout << "Euler Transform with Center Set to fixed Point and param not set";
-			eulerTransform->Print(std::cout);
-		}else if (ComponentAlong == 3) {
-			double parametersArray[9] = { thetaYZ, thetaXZ, thetaXY, 0, 0,0, 0,0,0 };
-			TransformType::ParametersType params(9);
-			for (int i = 0; i < 9; i++) {
-				params[i] = parametersArray[i];
-			}
-			eulerTransform->SetParameters(params);
-			//eulerTransform->SetCenter(fixedPoint);
-			std::cout << "Euler Transform with Center Not Set and param not set";
-			eulerTransform->Print(std::cout);
-		} else if (ComponentAlong == 4) {
-			double parametersArray[9] = { thetaYZ, thetaXZ, thetaXY, -fixedPoint[0],- fixedPoint[1], -fixedPoint[2], 0,0,0 };
-			TransformType::ParametersType params(9);
-			for (int i = 0; i < 9; i++) {
-				params[i] = parametersArray[i];
-			}
-			eulerTransform->SetParameters(params);
-			//eulerTransform->SetCenter(fixedPoint);
-			std::cout << "Euler Transform with Center Set to fixed Point";
-			eulerTransform->Print(std::cout);
-		}
-		// eulerTransform->SetRotation(thetaYZ, thetaXZ, thetaXY);
-		 /*
-		   Translation and rotation finished
-		 */
+		std::cout << "Euler Transform with Center Set to fixed Point";
+		eulerTransform->Print(std::cout);
 
-		
+		/*
+		  Translation and rotation finished
+		*/
 
 		/*
 		  Result Resampling and writing

@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="BookmarkManager">
+    <bookmark url="file://$PROJECT_DIR$/Test.py" line="166" />
+  </component>
   <component name="ChangeListManager">
-    <list default="true" id="3968e0fe-b6b3-4d4c-9107-650b0541eddd" name="Default Changelist" comment="">
+    <list default="true" id="578a5ac9-8f25-4868-9ef0-28e90e4188c8" name="Default Changelist" comment="">
       <change afterPath="$PROJECT_DIR$/../RotateCenter/RotateCenter.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../Logic/Logic.cxx" beforeDir="false" afterPath="$PROJECT_DIR$/../Logic/Logic.cxx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TModel.py" beforeDir="false" afterPath="$PROJECT_DIR$/TModel.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../TModel/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../TModel/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../TModel/TModel.py" beforeDir="false" afterPath="$PROJECT_DIR$/../TModel/TModel.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -15,29 +18,15 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+    <leaf>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/TModel.py">
+        <entry file="file://$PROJECT_DIR$/Test.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="527">
-              <caret line="253" column="40" lean-forward="true" selection-start-line="253" selection-start-column="40" selection-end-line="253" selection-end-column="40" />
+            <state relative-caret-position="303">
+              <caret line="161" column="22" selection-start-line="161" selection-start-column="22" selection-end-line="161" selection-end-column="22" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/../../Slc/Modules/Scripted/Editor/Editor.py">
-          <provider selected="true" editor-type-id="text-editor" />
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/../../Slc/Modules/Scripted/ExtensionWizard/ExtensionWizard.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1156">
-              <caret line="79" selection-start-line="79" selection-end-line="80" selection-end-column="70" />
             </state>
           </provider>
         </entry>
@@ -46,16 +35,9 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>def set</find>
-      <find>qMRMLNodeComboBox</find>
-      <find>No input data</find>
-      <find>run(</find>
-      <find>weights</find>
-      <find>inputVolume.GetId()</find>
+      <find>threshold</find>
+      <find>screen</find>
     </findStrings>
-    <replaceStrings>
-      <replace>expandedVolume</replace>
-    </replaceStrings>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
@@ -63,7 +45,7 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/TModel.py" />
+        <option value="$PROJECT_DIR$/Test.py" />
       </list>
     </option>
   </component>
@@ -79,13 +61,25 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="ProjectPane" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="Test" type="b2602c69:ProjectViewProjectNode" />
+              <item name="Test" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
       <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../Test" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
+    <property name="nodejs_npm_path_reset_for_default_project" value="true" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -104,38 +98,24 @@
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="3968e0fe-b6b3-4d4c-9107-650b0541eddd" name="Default Changelist" comment="" />
-      <created>1550600440340</created>
+      <changelist id="578a5ac9-8f25-4868-9ef0-28e90e4188c8" name="Default Changelist" comment="" />
+      <created>1551098415557</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1550600440340</updated>
-      <workItem from="1550600442837" duration="836000" />
-      <workItem from="1550651520366" duration="4763000" />
-      <workItem from="1550672968246" duration="131000" />
-      <workItem from="1550673621748" duration="29000" />
-      <workItem from="1550673760941" duration="65000" />
-      <workItem from="1550674089329" duration="5000" />
-      <workItem from="1550674377294" duration="8000" />
-      <workItem from="1550861440387" duration="618000" />
-      <workItem from="1550920151758" duration="174000" />
-      <workItem from="1550946978435" duration="1114000" />
-      <workItem from="1550948864802" duration="1624000" />
-      <workItem from="1550955044328" duration="4966000" />
-      <workItem from="1551029531954" duration="5208000" />
-      <workItem from="1551078764981" duration="4807000" />
-      <workItem from="1551087703848" duration="4348000" />
-      <workItem from="1551098385470" duration="832000" />
+      <updated>1551098415557</updated>
+      <workItem from="1551098416764" duration="34000" />
+      <workItem from="1551098487113" duration="2044000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="29528000" />
+    <option name="totallyTimeSpent" value="2078000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="1912" y="-8" width="1936" height="1056" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.20895523" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.25266525" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -162,30 +142,13 @@
     <option name="version" value="1" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/../../Slc/Modules/Scripted/DataProbe/DataProbe.py">
+    <entry file="file://$PROJECT_DIR$/Test.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="340">
-          <caret line="374" column="54" selection-start-line="374" selection-start-column="54" selection-end-line="374" selection-end-column="54" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/TModel.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="527">
-          <caret line="253" column="40" lean-forward="true" selection-start-line="253" selection-start-column="40" selection-end-line="253" selection-end-column="40" />
+        <state relative-caret-position="303">
+          <caret line="161" column="22" selection-start-line="161" selection-start-column="22" selection-end-line="161" selection-end-column="22" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../Slc/Modules/Scripted/Editor/Editor.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../Slc/Modules/Scripted/ExtensionWizard/ExtensionWizard.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1156">
-          <caret line="79" selection-start-line="79" selection-end-line="80" selection-end-column="70" />
         </state>
       </provider>
     </entry>
