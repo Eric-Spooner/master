@@ -188,12 +188,36 @@ class TModelLogic(ScriptedLoadableModuleLogic):
                  'Lower': 2, 'Upper': 2, 'ThresholdType': 'Outside'}
     cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True)
 
-    headRotateVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "headRotateVolume")
+    # headRotateVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "headRotateVolume")
+    # headRotateVolume2 = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "headRotateVolume2")
+    # headRotateVolume3 = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "headRotateVolume3")
+    # headRotateVolume4 = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "headRotateVolume4")
+    headRotateVolume5 = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "headRotateVolume5")
 
+    # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
+    # cliParams = {'inputVolume': headVolume, 'ComponentToRotate': 2,
+    #             'ComponentFixed': 3, 'ArmaturePoly': armatureModel.GetID(),
+    #              'outputVolume': headRotateVolume}
+    # cliNode = slicer.cli.run(slicer.modules.logic, None, cliParams, wait_for_completion=True)
+    # # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
+    # cliParams = {'inputVolume': headVolume, 'ComponentToRotate': 2,
+    #             'ComponentFixed': 3, 'ArmaturePoly': armatureModel.GetID(),
+    #              'outputVolume': headRotateVolume2, 'ComponentAlong':1}
+    # cliNode = slicer.cli.run(slicer.modules.logic, None, cliParams, wait_for_completion=True)
+    # # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
+    # cliParams = {'inputVolume': headVolume, 'ComponentToRotate': 2,
+    #             'ComponentFixed': 3, 'ArmaturePoly': armatureModel.GetID(),
+    #              'outputVolume': headRotateVolume3, 'ComponentAlong':2}
+    # cliNode = slicer.cli.run(slicer.modules.logic, None, cliParams, wait_for_completion=True)
+    # # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
+    # cliParams = {'inputVolume': headVolume, 'ComponentToRotate': 2,
+    #             'ComponentFixed': 3, 'ArmaturePoly': armatureModel.GetID(),
+    #              'outputVolume': headRotateVolume4, 'ComponentAlong':3}
+    # cliNode = slicer.cli.run(slicer.modules.logic, None, cliParams, wait_for_completion=True)
     # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
     cliParams = {'inputVolume': headVolume, 'ComponentToRotate': 2,
                 'ComponentFixed': 3, 'ArmaturePoly': armatureModel.GetID(),
-                 'outputVolume': headRotateVolume}
+                 'outputVolume': headRotateVolume5, 'ComponentAlong': 4}
     cliNode = slicer.cli.run(slicer.modules.logic, None, cliParams, wait_for_completion=True)
 
     """Get the nack
@@ -210,7 +234,7 @@ class TModelLogic(ScriptedLoadableModuleLogic):
     """
     nackHead =  slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "nackHead")
 
-    cliParams = {'inputVolume1': nackVolume, 'inputVolume2': headRotateVolume, 'outputVolume': nackHead, 'order': 1}
+    cliParams = {'inputVolume1': nackVolume, 'inputVolume2': headRotateVolume5, 'outputVolume': nackHead, 'order': 1}
     cliNode = slicer.cli.run(slicer.modules.addscalarvolumes, None, cliParams, wait_for_completion=True)
 
 
@@ -221,7 +245,7 @@ class TModelLogic(ScriptedLoadableModuleLogic):
     # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
     cliParams = {'inputVolume': nackHead, 'ComponentToRotate': 3,
                 'ComponentFixed': 6, 'ArmaturePoly': armatureModel.GetID(),
-                 'outputVolume': outputVolume.GetID()}
+                 'outputVolume': nackHeadRotate, 'ComponentAlong': 4}
     cliNode = slicer.cli.run(slicer.modules.logic, None, cliParams, wait_for_completion=True)
 
     logging.info('Processing completed')

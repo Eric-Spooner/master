@@ -17,6 +17,7 @@
 #include <itkDirectory.h>
 #include <itkImageTransformer.h>
 #include <itkAffineTransform.h>
+#include <itkCenteredEuler3DTransform.h>
 #include <itkResampleImageFilter.h>
 
 // VTK includes
@@ -54,213 +55,277 @@ typedef itk::Vector<double, 4> Vec4;
 namespace
 {
 	template<class T>
-	int DoIt( int argc, char * argv[])
+	int DoIt(int argc, char * argv[])
 	{
-		  PARSE_ARGS;
+		PARSE_ARGS;
 
-		  
-		  typedef    T InputPixelType;
-		  typedef    T OutputPixelType;
 
-		  typedef itk::Image<InputPixelType, 3> InputImageType;
-		  typedef itk::Image<OutputPixelType, 3> OutputImageType;
+		typedef    T InputPixelType;
+		typedef    T OutputPixelType;
 
-		  typedef itk::ImageFileReader<InputImageType>  ReaderType;
-		  typedef itk::ImageFileWriter<OutputImageType> WriterType;
+		typedef itk::Image<InputPixelType, 3> InputImageType;
+		typedef itk::Image<OutputPixelType, 3> OutputImageType;
 
-		  typedef itk::ResampleImageFilter<InputImageType, OutputImageType>                                    ResampleType;
+		typedef itk::ImageFileReader<InputImageType>  ReaderType;
+		typedef itk::ImageFileWriter<OutputImageType> WriterType;
 
-		  typename ReaderType::Pointer reader = ReaderType::New();
-		  itk::PluginFilterWatcher watchReader(reader, "Read Volume",
-			  CLPProcessInformation);
+		typedef itk::ResampleImageFilter<InputImageType, OutputImageType>                                    ResampleType;
 
-		  using ScalarType = double;
-		  constexpr unsigned int Dimension = 3;
+		typename ReaderType::Pointer reader = ReaderType::New();
+		itk::PluginFilterWatcher watchReader(reader, "Read Volume",
+			CLPProcessInformation);
 
-		  reader->SetFileName(inputVolume.c_str());
-		  
-		  std::cout << "Read input image" << std::endl;
-		  reader->Update();
-		  std::cout << "Input image read" << std::endl;
-		  //
-		  // READ ARMATURE
-		  //
+		using ScalarType = double;
+		constexpr unsigned int Dimension = 3;
 
-		  vtkSmartPointer<vtkPolyData> armature;
-		  armature.TakeReference(bender::IOUtils::ReadPolyData(ArmaturePoly.c_str(), false));
-		  //double restArmatureBounds[6] = { 0., -1., 0., -1., 0., -1. };
-		  //armature->GetBounds(restArmatureBounds);
-		  //std::cout << "Rest armature bounds: "
-		//	  << restArmatureBounds[0] << ", " << restArmatureBounds[1] << ", "
-			//  << restArmatureBounds[2] << ", " << restArmatureBounds[3] << ", "
-			//  << restArmatureBounds[4] << ", " << restArmatureBounds[5] << std::endl;
+		reader->SetFileName(inputVolume.c_str());
 
- 
-		  Vec3 fixedA;
-		  Vec3 fixedB;
-		  Vec3 rotateA;
-		  Vec3 rotateB;
+		std::cout << "Read input image" << std::endl;
+		reader->Update();
+		std::cout << "Input image read" << std::endl;
+		//
+		// READ ARMATURE
+		//
 
-		  vtkPoints* inPoints = armature->GetPoints();
-		  vtkCellArray* armatureSegments = armature->GetLines();
-		  vtkCellData* armatureCellData = armature->GetCellData();
-		  vtkNew<vtkIdList> cell;
-		  armatureSegments->InitTraversal();
-		  int edgeId(0);
-		  int i = 2;
-		  while (armatureSegments->GetNextCell(cell.GetPointer()))
-		  {
-			  vtkIdType a = cell->GetId(0);
-			  vtkIdType b = cell->GetId(1);
+		vtkSmartPointer<vtkPolyData> armature;
+		armature.TakeReference(bender::IOUtils::ReadPolyData(ArmaturePoly.c_str(), false));
+		//double restArmatureBounds[6] = { 0., -1., 0., -1., 0., -1. };
+		//armature->GetBounds(restArmatureBounds);
+		//std::cout << "Rest armature bounds: "
+	  //	  << restArmatureBounds[0] << ", " << restArmatureBounds[1] << ", "
+		  //  << restArmatureBounds[2] << ", " << restArmatureBounds[3] << ", "
+		  //  << restArmatureBounds[4] << ", " << restArmatureBounds[5] << std::endl;
 
-			  Vec3 ax(inPoints->GetPoint(a));
-			  Vec3 bx(inPoints->GetPoint(b));
 
-			  if (i == ComponentFixed) {
-				  fixedA = ax;
-				  fixedB = bx;
-			  }
-			  if (i == ComponentToRotate) {
-				  rotateA = ax;
-				  rotateB = bx;
-			  }
+		Vec3 fixedA;
+		Vec3 fixedB;
+		Vec3 rotateA;
+		Vec3 rotateB;
 
-			  //std::cout << "Segment " << i << "A : " << ax << " B : " << bx<< std::endl;
-			  i++;
-		  }
+		vtkPoints* inPoints = armature->GetPoints();
+		vtkCellArray* armatureSegments = armature->GetLines();
+		vtkCellData* armatureCellData = armature->GetCellData();
+		vtkNew<vtkIdList> cell;
+		armatureSegments->InitTraversal();
+		int edgeId(0);
+		int i = 2;
+		while (armatureSegments->GetNextCell(cell.GetPointer()))
+		{
+			vtkIdType a = cell->GetId(0);
+			vtkIdType b = cell->GetId(1);
 
-		  std::cout << "FixedPart " << ComponentFixed << "A : " << fixedA << " FixedPart B : " << fixedB << std::endl;
-		  std::cout << "RotatePart " << ComponentToRotate << " A : " << rotateA << " RotatePart B : " << rotateB << std::endl;
+			Vec3 ax(inPoints->GetPoint(a));
+			Vec3 bx(inPoints->GetPoint(b));
 
-		  Vec3 rotPart;
-		  Vec3 fixedPart;
-		  Vec3 fixedPoint;
-		  vtkSmartPointer<vtkTransform> transformPointer = vtkSmartPointer<vtkTransform>::New();
-  
-		  if (fixedA == rotateB) {
-			  rotPart = rotateA - fixedB;
-			  fixedPart = fixedA - fixedB;
-			  fixedPoint = fixedA;
-		  }
-		  else if (fixedB == rotateA) {
-			  rotPart = rotateB - fixedA;
-			  fixedPart = fixedB - fixedA;
-			  fixedPoint = fixedB;
-		  }
+			if (i == ComponentFixed) {
+				fixedA = ax;
+				fixedB = bx;
+			}
+			if (i == ComponentToRotate) {
+				rotateA = ax;
+				rotateB = bx;
+			}
 
-		  std::cout << "Two vecs: rot: " << rotPart << " fix: " << fixedPart << std::endl;
+			//std::cout << "Segment " << i << "A : " << ax << " B : " << bx<< std::endl;
+			i++;
+		}
 
-		  /*
-			Translation and rotaion of the Rotational part according to the given fixed Part
-			done by using an affine transformation.
-		  */
-		  using TransformType = itk::AffineTransform< ScalarType, Dimension >;
-		  TransformType::Pointer transformTranslate1 = TransformType::New();
+		std::cout << "FixedPart " << ComponentFixed << "A : " << fixedA << " FixedPart B : " << fixedB << std::endl;
+		std::cout << "RotatePart " << ComponentToRotate << " A : " << rotateA << " RotatePart B : " << rotateB << std::endl;
 
-		  // Translate to origin
-		  transformTranslate1->Translate(-fixedPoint, true);
-		  std::cout << "Translate origin: " << -fixedPoint << std::endl;
+		Vec3 rotPart;
+		Vec3 fixedPart;
+		Vec3 fixedPoint;
+		vtkSmartPointer<vtkTransform> transformPointer = vtkSmartPointer<vtkTransform>::New();
 
-		  const InputImageType::SizeType& size = reader->GetOutput()->GetLargestPossibleRegion().GetSize();
-		  using ResampleImageFilterType = itk::ResampleImageFilter< InputImageType, OutputImageType >;
+		if (fixedA == rotateB) {
+			rotPart = rotateA - fixedB;
+			fixedPart = fixedA - fixedB;
+			fixedPoint = fixedA;
+		}
+		else if (fixedB == rotateA) {
+			rotPart = rotateB - fixedA;
+			fixedPart = fixedB - fixedA;
+			fixedPoint = fixedB;
+		}
 
-		  typename ResampleImageFilterType::Pointer resample1 = ResampleImageFilterType::New();
-		  resample1->SetInput(reader->GetOutput());
-		  resample1->SetTransform(transformTranslate1);
-		  resample1->SetReferenceImage(reader->GetOutput());
-		  resample1->UseReferenceImageOn();
-		  resample1->SetSize(size);
+		std::cout << "Two vecs: rot: " << rotPart << " fix: " << fixedPart << std::endl;
 
-		  /*
-			========
-			ROTATION BEGIN
-			=========
-		  */
+		/*
+		  Translation and rotaion of the Rotational part according to the given fixed Part
+		  done by using an affine transformation.
+		*/
+		using TransformType = itk::CenteredEuler3DTransform<ScalarType>;
+		TransformType::Pointer eulerTransform = TransformType::New();
 
-		  TransformType::Pointer transformRotate = TransformType::New();
+		//using ParameterType = itk::Euler3DTransform<ScalarType>::FixedParametersType;
 
-		  // Rotation around XY:
-		  double thetaXY = getTheta(rotPart.GetElement(0), rotPart.GetElement(1),
-			  fixedPart.GetElement(0), fixedPart.GetElement(1));
-		  std::cout << "thetaXY: " << thetaXY << std::endl;
-		  double axisZ[3] = { 0.0, 0.0, 1.0 };
-		  transformRotate->Rotate3D(Vec3(axisZ), thetaXY, false);
+		// Translate to origin
+//		  transformTranslate1->Translate(-fixedPoint, true);
+		std::cout << "Translate origin: " << -fixedPoint << std::endl;
 
-		  // calculate the new coordinates of the rotational part in order to carry on with rotational calculation
-		  double arrayRz[3][3] = { {cos(thetaXY), sin(thetaXY), 0},
-								{-sin(thetaXY),cos(thetaXY),0},
-								{ 0,0,1}};
-		  Mat33 Rz = ToItkMatrix(arrayRz);
-		  rotPart = Rz*rotPart;
+		const InputImageType::SizeType& size = reader->GetOutput()->GetLargestPossibleRegion().GetSize();
+		using ResampleImageFilterType = itk::ResampleImageFilter< InputImageType, OutputImageType >;
 
-		  std::cout << "rotPart: " << rotPart << std::endl;
+		//	  typename ResampleImageFilterType::Pointer resample1 = ResampleImageFilterType::New();
+		//	  resample1->SetInput(reader->GetOutput());
+		//	  resample1->SetTransform(transformTranslate1);
+		//	  resample1->SetReferenceImage(reader->GetOutput());
+		//	  resample1->UseReferenceImageOn();
+		//	  resample1->SetSize(size);
 
-		  // Rotation around YZ:
-		  double thetaYZ = getTheta(rotPart.GetElement(1), rotPart.GetElement(2),
-			  fixedPart.GetElement(1), fixedPart.GetElement(2));
-		  std::cout << "thetaYZ: " << thetaYZ << std::endl;
-		  double axisX[3] = { 1.0, 0.0, 0.0 };
-		  transformRotate->Rotate3D(Vec3(axisX), thetaYZ, false);
+			  /*
+				========
+				ROTATION BEGIN
+				=========
+			  */
+
+			  //  TransformType::Pointer transformRotate = TransformType::New();
+
+				// Rotation around XY:
+		double thetaXY = getTheta(rotPart.GetElement(0), rotPart.GetElement(1),
+			fixedPart.GetElement(0), fixedPart.GetElement(1));
+		std::cout << "thetaXY: " << thetaXY << std::endl;
+		double axisZ[3] = { 0.0, 0.0, 1.0 };
+		//  transformRotate->Rotate3D(Vec3(axisZ), thetaXY, false);
 
 		  // calculate the new coordinates of the rotational part in order to carry on with rotational calculation
-		  double arrayRx[3][3] = { {1, 0, 0},
-								{0,cos(thetaYZ),sin(thetaYZ)},
-								{0,-sin(thetaYZ),cos(thetaYZ)}};
-		  Mat33 Rx = ToItkMatrix(arrayRx);
-		  rotPart = Rx * rotPart;
+		double arrayRz[3][3] = { {cos(thetaXY), sin(thetaXY), 0},
+							  {-sin(thetaXY),cos(thetaXY),0},
+							  { 0,0,1} };
+		Mat33 Rz = ToItkMatrix(arrayRz);
+		rotPart = Rz * rotPart;
 
-		  std::cout << "rotPart: " << rotPart << std::endl;
-		  
-		  // Rotation around XZ:
-		  double thetaXZ = -getTheta(rotPart.GetElement(0), rotPart.GetElement(2),
-			  fixedPart.GetElement(0), fixedPart.GetElement(2));
-		  std::cout << "thetaXZ: " << thetaXZ << std::endl;
-		  double axisY[3] = { 0.0, 1.0, 0.0 };
-		  transformRotate->Rotate3D(Vec3(axisY), thetaXZ, false);
+		std::cout << "rotPart: " << rotPart << std::endl;
 
-		  typename ResampleImageFilterType::Pointer resample2 = ResampleImageFilterType::New();
-		  resample2->SetInput(resample1->GetOutput());
-		  resample2->SetTransform(transformRotate);
-		  resample2->SetReferenceImage(resample1->GetOutput());
-		  resample2->UseReferenceImageOn();
-		  resample2->SetSize(size);
+		// Rotation around YZ:
+		double thetaYZ = getTheta(rotPart.GetElement(1), rotPart.GetElement(2),
+			fixedPart.GetElement(1), fixedPart.GetElement(2));
+		std::cout << "thetaYZ: " << thetaYZ << std::endl;
+		double axisX[3] = { 1.0, 0.0, 0.0 };
+		//  transformRotate->Rotate3D(Vec3(axisX), thetaYZ, false);
 
-		  /*
-			========
-			ROTATION END
-			=========
-		  */
+		  // calculate the new coordinates of the rotational part in order to carry on with rotational calculation
+		double arrayRx[3][3] = { {1, 0, 0},
+							  {0,cos(thetaYZ),sin(thetaYZ)},
+							  {0,-sin(thetaYZ),cos(thetaYZ)} };
+		Mat33 Rx = ToItkMatrix(arrayRx);
+		rotPart = Rx * rotPart;
 
-		  // Translate Back
-		  TransformType::Pointer transformTranslate2 = TransformType::New();
-		  transformTranslate2->Translate(fixedPoint);
-		  std::cout << "Translate origin: " << fixedPoint << std::endl;
+		std::cout << "rotPart: " << rotPart << std::endl;
 
-		  /*
-			Translation and rotation finished
-		  */
+		// Rotation around XZ:
+		double thetaXZ = -getTheta(rotPart.GetElement(0), rotPart.GetElement(2),
+			fixedPart.GetElement(0), fixedPart.GetElement(2));
+		std::cout << "thetaXZ: " << thetaXZ << std::endl;
+		double axisY[3] = { 0.0, 1.0, 0.0 };
+		// transformRotate->Rotate3D(Vec3(axisY), thetaXZ, false);
 
-		  /*
-			Result Resampling and writing
-		  */
-		  typename ResampleImageFilterType::Pointer resample = ResampleImageFilterType::New();
-		  resample->SetInput(resample2->GetOutput());
-		  resample->SetTransform(transformTranslate2);
-		  resample->SetReferenceImage(resample2->GetOutput());
-		  resample->UseReferenceImageOn();
-		  resample->SetSize(size);
+		 //typename ResampleImageFilterType::Pointer resample2 = ResampleImageFilterType::New();
+		 //resample2->SetInput(resample1->GetOutput());
+		 //resample2->SetTransform(transformRotate);
+		 //resample2->SetReferenceImage(resample1->GetOutput());
+		 //resample2->UseReferenceImageOn();
+		 //resample2->SetSize(size);
 
-		  typename WriterType::Pointer writer = WriterType::New();
-		  itk::PluginFilterWatcher watchWriter(writer,
-			  "Write Volume",
-			  CLPProcessInformation);
-		  writer->SetFileName(outputVolume.c_str());
-		  writer->SetInput(resample->GetOutput());
-		  writer->SetUseCompression(1);
-		  writer->Update();
+		 /*
+		   ========
+		   ROTATION END
+		   =========
+		 */
+
+		 // Translate Back
+		// TransformType::Pointer transformTranslate2 = TransformType::New();
+	   //  transformTranslate2->Translate(fixedPoint);
+		std::cout << "Translate origin: " << fixedPoint << std::endl;
 
 
-		  return EXIT_SUCCESS;
+
+		//ParameterType eulerFixedParameters = ParameterType(fixedPoint);
+		//eulerTransform->SetFixedParameters(eulerFixedParameters);
+		//eulerTransform->SetCenter(fixedPoint);
+	  //  eulerTransform->TransformPoint(fixedPoint);
+	  //  eulerTransform->SetCenter(fixedPoint);
+		if (ComponentAlong == -1) {
+			double parametersArray[9] = { thetaYZ, thetaXZ, thetaXY, fixedPoint[0] / 2.0, fixedPoint[1] / 2.0, fixedPoint[2] / 2.0, 0,0,0 };
+			TransformType::ParametersType params(9);
+			for (int i = 0; i < 9; i++) {
+				params[i] = parametersArray[i];
+			}
+			eulerTransform->SetParameters(params);
+			eulerTransform->SetCenter(fixedPoint / 2);
+			std::cout << "Euler Transform with Center Set to half fixed Point";
+			eulerTransform->Print(std::cout);
+		}
+		else if (ComponentAlong == 1) {
+			double parametersArray[9] = { thetaYZ, thetaXZ, thetaXY, fixedPoint[0], fixedPoint[1], fixedPoint[2], 0,0,0 };
+			TransformType::ParametersType params(9);
+			for (int i = 0; i < 9; i++) {
+				params[i] = parametersArray[i];
+			}
+			eulerTransform->SetParameters(params);
+			eulerTransform->SetCenter(fixedPoint);
+			std::cout << "Euler Transform with Center Set to fixed Point";
+			eulerTransform->Print(std::cout);
+		}else if (ComponentAlong == 2) {
+			double parametersArray[9] = { thetaYZ, thetaXZ, thetaXY, 0, 0,0, 0,0,0 };
+			TransformType::ParametersType params(9);
+			for (int i = 0; i < 9; i++) {
+				params[i] = parametersArray[i];
+			}
+			eulerTransform->SetParameters(params);
+			eulerTransform->SetCenter(fixedPoint);
+			std::cout << "Euler Transform with Center Set to fixed Point and param not set";
+			eulerTransform->Print(std::cout);
+		}else if (ComponentAlong == 3) {
+			double parametersArray[9] = { thetaYZ, thetaXZ, thetaXY, 0, 0,0, 0,0,0 };
+			TransformType::ParametersType params(9);
+			for (int i = 0; i < 9; i++) {
+				params[i] = parametersArray[i];
+			}
+			eulerTransform->SetParameters(params);
+			//eulerTransform->SetCenter(fixedPoint);
+			std::cout << "Euler Transform with Center Not Set and param not set";
+			eulerTransform->Print(std::cout);
+		} else if (ComponentAlong == 4) {
+			double parametersArray[9] = { thetaYZ, thetaXZ, thetaXY, -fixedPoint[0],- fixedPoint[1], -fixedPoint[2], 0,0,0 };
+			TransformType::ParametersType params(9);
+			for (int i = 0; i < 9; i++) {
+				params[i] = parametersArray[i];
+			}
+			eulerTransform->SetParameters(params);
+			//eulerTransform->SetCenter(fixedPoint);
+			std::cout << "Euler Transform with Center Set to fixed Point";
+			eulerTransform->Print(std::cout);
+		}
+		// eulerTransform->SetRotation(thetaYZ, thetaXZ, thetaXY);
+		 /*
+		   Translation and rotation finished
+		 */
+
+		
+
+		/*
+		  Result Resampling and writing
+		*/
+		typename ResampleImageFilterType::Pointer resample = ResampleImageFilterType::New();
+		resample->SetInput(reader->GetOutput());
+		resample->SetTransform(eulerTransform);
+		resample->SetReferenceImage(reader->GetOutput());
+		resample->UseReferenceImageOn();
+		resample->SetSize(size);
+
+		typename WriterType::Pointer writer = WriterType::New();
+		itk::PluginFilterWatcher watchWriter(writer,
+			"Write Volume",
+			CLPProcessInformation);
+		writer->SetFileName(outputVolume.c_str());
+		writer->SetInput(resample->GetOutput());
+		writer->SetUseCompression(1);
+		writer->Update();
+
+
+		return EXIT_SUCCESS;
 	}
 
 } // end of anonymous namespace
@@ -272,7 +337,7 @@ double getTheta(double vx, double vy, double ux, double uy) {
 	double A = va - ua;
 	A = A - 360 * (A > 180) + 360 * (A < -180);
 	std::cout << "vx: " << vx << " vy: " << vy << " va : " << va
-		<< " ux: " << ux << " uy: " << uy <<  " ua: " << ua << std::endl;
+		<< " ux: " << ux << " uy: " << uy << " ua: " << ua << std::endl;
 	return A * M_PI / 180;
 }
 
@@ -290,63 +355,63 @@ Mat33 ToItkMatrix(double M[3][3])
 	return itkM;
 }
 
-int main( int argc, char * argv[] )
+int main(int argc, char * argv[])
 {
-  PARSE_ARGS;
+	PARSE_ARGS;
 
-  try
-  {
-	  itk::ImageIOBase::IOPixelType     pixelType;
-	  itk::ImageIOBase::IOComponentType componentType;
+	try
+	{
+		itk::ImageIOBase::IOPixelType     pixelType;
+		itk::ImageIOBase::IOComponentType componentType;
 
-	  itk::GetImageType(inputVolume, pixelType, componentType);
+		itk::GetImageType(inputVolume, pixelType, componentType);
 
-	  // This filter handles all types on input, but only produces
-	  // signed types
-	  switch (componentType)
-	  {
-	  case itk::ImageIOBase::UCHAR:
-		  return DoIt<unsigned char>(argc, argv);
-		  break;
-	  case itk::ImageIOBase::CHAR:
-		  return DoIt<char>(argc, argv);
-		  break;
-	  case itk::ImageIOBase::USHORT:
-		  return DoIt<unsigned short>(argc, argv);
-		  break;
-	  case itk::ImageIOBase::SHORT:
-		  return DoIt<short>(argc, argv);
-		  break;
-	  case itk::ImageIOBase::UINT:
-		  return DoIt<unsigned int>(argc, argv);
-		  break;
-	  case itk::ImageIOBase::INT:
-		  return DoIt<int>(argc, argv);
-		  break;
-	  case itk::ImageIOBase::ULONG:
-		  return DoIt<unsigned long>(argc, argv);
-		  break;
-	  case itk::ImageIOBase::LONG:
-		  return DoIt<long>(argc, argv);
-		  break;
-	  case itk::ImageIOBase::FLOAT:
-		  return DoIt<float>(argc, argv);
-		  break;
-	  case itk::ImageIOBase::DOUBLE:
-		  return DoIt<double>(argc, argv);
-		  break;
-	  case itk::ImageIOBase::UNKNOWNCOMPONENTTYPE:
-	  default:
-		  std::cerr << "Unknown component type: " << componentType << std::endl;
-		  break;
-	  }
-  }
+		// This filter handles all types on input, but only produces
+		// signed types
+		switch (componentType)
+		{
+		case itk::ImageIOBase::UCHAR:
+			return DoIt<unsigned char>(argc, argv);
+			break;
+		case itk::ImageIOBase::CHAR:
+			return DoIt<char>(argc, argv);
+			break;
+		case itk::ImageIOBase::USHORT:
+			return DoIt<unsigned short>(argc, argv);
+			break;
+		case itk::ImageIOBase::SHORT:
+			return DoIt<short>(argc, argv);
+			break;
+		case itk::ImageIOBase::UINT:
+			return DoIt<unsigned int>(argc, argv);
+			break;
+		case itk::ImageIOBase::INT:
+			return DoIt<int>(argc, argv);
+			break;
+		case itk::ImageIOBase::ULONG:
+			return DoIt<unsigned long>(argc, argv);
+			break;
+		case itk::ImageIOBase::LONG:
+			return DoIt<long>(argc, argv);
+			break;
+		case itk::ImageIOBase::FLOAT:
+			return DoIt<float>(argc, argv);
+			break;
+		case itk::ImageIOBase::DOUBLE:
+			return DoIt<double>(argc, argv);
+			break;
+		case itk::ImageIOBase::UNKNOWNCOMPONENTTYPE:
+		default:
+			std::cerr << "Unknown component type: " << componentType << std::endl;
+			break;
+		}
+	}
 
-  catch (itk::ExceptionObject & excep)
-  {
-	  std::cerr << argv[0] << ": exception caught !" << std::endl;
-	  std::cerr << excep << std::endl;
-	  return EXIT_FAILURE;
-  }
-  return EXIT_SUCCESS;
+	catch (itk::ExceptionObject & excep)
+	{
+		std::cerr << argv[0] << ": exception caught !" << std::endl;
+		std::cerr << excep << std::endl;
+		return EXIT_FAILURE;
+	}
+	return EXIT_SUCCESS;
 }
