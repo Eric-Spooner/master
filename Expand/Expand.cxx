@@ -78,7 +78,7 @@ namespace
 		// Create a blank image volume to extend the bounds
 		InputImageType::Pointer boundingimg = InputImageType::New();
 		boundingimg->SetSpacing(spacing);
-		//boundingimg->SetOrigin(origin);
+		boundingimg->SetOrigin(origin);
 		InputImageType::IndexType index;
 		index[0] = 0;
 		index[1] = 0;
@@ -92,9 +92,9 @@ namespace
 		boundingimg->Update();
 
 		// Paste the image in the middle of the new blank image
-		index[0] = (outputsize[0] - size[0]) / 2 + origin[0];
-		index[1] = (outputsize[1] - size[1]) / 2 + origin[1];
-		index[2] = (outputsize[2] - size[2]) / 2 + origin[2];
+		index[0] = (outputsize[0] - size[0]) / 2;
+		index[1] = (outputsize[1] - size[1]) / 2;
+		index[2] = (outputsize[2] - size[2]) / 2;
 		paster->SetDestinationIndex(index);
 		paster->SetDestinationImage(boundingimg);
 		paster->SetSourceImage(inputImage);
