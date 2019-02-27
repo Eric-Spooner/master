@@ -24,6 +24,7 @@ add_subdirectory(Logic)
 add_subdirectory(Expand)
 add_subdirectory(RotateCenter)
 add_subdirectory(ThresholdMaster)
+add_subdirectory(AddVolume)
 ## NEXT_MODULE
 
 #-----------------------------------------------------------------------------

@@ -102,6 +102,9 @@ namespace
 		Vec3 rotateA;
 		Vec3 rotateB;
 
+		Vec3 bellyA;
+		Vec3 bellyB;
+
 		vtkPoints* inPoints = armature->GetPoints();
 		vtkCellArray* armatureSegments = armature->GetLines();
 		vtkCellData* armatureCellData = armature->GetCellData();
@@ -125,13 +128,16 @@ namespace
 				rotateA = ax;
 				rotateB = bx;
 			}
-			 
-			std::cout << "Segment " << i << " A : " << ax << " B : " << bx<< std::endl;
+
+			if (i == 7) {
+				// Get the belly for the legs
+				bellyA = ax;
+				bellyB = bx;
+			}
+
+			//std::cout << "Segment " << i << " A : " << ax << " B : " << bx<< std::endl;
 			i++;
 		}
-
-		std::cout << "FixedPart " << ComponentFixed << "A : " << fixedA << " FixedPart B : " << fixedB << std::endl;
-		std::cout << "RotatePart " << ComponentToRotate << " A : " << rotateA << " RotatePart B : " << rotateB << std::endl;
 
 		Vec3 rotPart;
 		Vec3 fixedPart;
@@ -139,17 +145,30 @@ namespace
 		vtkSmartPointer<vtkTransform> transformPointer = vtkSmartPointer<vtkTransform>::New();
 
 		if (fixedA == rotateB) {
-			rotPart = rotateA - fixedB;
+			rotPart = rotateA - rotateB;
 			fixedPart = fixedA - fixedB;
 			fixedPoint = fixedA;
 		}
 		else if (fixedB == rotateA) {
-			rotPart = rotateB - fixedA;
+			rotPart = rotateB - rotateA;
 			fixedPart = fixedB - fixedA;
 			fixedPoint = fixedB;
 		}
 
-		std::cout << "Two vecs: rot: " << rotPart << " fix: " << fixedPart << std::endl;
+		//	std::cout << "FixedPart " << ComponentFixed << "A : " << fixedA << " FixedPart B : " << fixedB << std::endl;
+		//	std::cout << "RotatePart " << ComponentToRotate << " A : " << rotateA << " RotatePart B : " << rotateB << std::endl;
+
+
+		if (ComponentToRotate == 10 || ComponentToRotate == 13) {
+			// The legs have to be rotated agains the belly NOT the pelvis
+			fixedPart = bellyB - bellyA;
+		}
+
+		// Normalize the vectors
+		rotPart = rotPart / rotPart.GetNorm();
+		fixedPart = fixedPart / fixedPart.GetNorm();
+
+		//std::cout << "Two vecs: rot: " << rotPart << " fix: " << fixedPart << std::endl;
 
 		/*
 		  Translation and rotaion of the Rotational part according to the given fixed Part
@@ -166,13 +185,11 @@ namespace
 		  ROTATION BEGIN
 		  =========
 		*/
-
-		//  TransformType::Pointer transformRotate = TransformType::New();
-
-		  // Rotation around XY:
+		// Rotation around XY:
 		double thetaXY = getTheta(rotPart.GetElement(0), rotPart.GetElement(1),
 			fixedPart.GetElement(0), fixedPart.GetElement(1));
-		std::cout << "thetaXY: " << thetaXY << std::endl;
+
+		//std::cout << "thetaXY: " << thetaXY << std::endl;
 		double axisZ[3] = { 0.0, 0.0, 1.0 };
 		//  transformRotate->Rotate3D(Vec3(axisZ), thetaXY, false);
 
@@ -182,12 +199,12 @@ namespace
 							  { 0,0,1} };
 		Mat33 Rz = ToItkMatrix(arrayRz);
 		rotPart = Rz * rotPart;
-		std::cout << "rotPart: " << rotPart << std::endl;
+		//	std::cout << "rotPart: " << rotPart << std::endl;
 
-		// Rotation around YZ:
+			// Rotation around YZ:
 		double thetaYZ = getTheta(rotPart.GetElement(1), rotPart.GetElement(2),
 			fixedPart.GetElement(1), fixedPart.GetElement(2));
-		std::cout << "thetaYZ: " << thetaYZ << std::endl;
+		//	std::cout << "thetaYZ: " << thetaYZ << std::endl;
 		double axisX[3] = { 1.0, 0.0, 0.0 };
 
 		// calculate the new coordinates of the rotational part in order to carry on with rotational calculation
@@ -196,12 +213,12 @@ namespace
 							  {0,-sin(thetaYZ),cos(thetaYZ)} };
 		Mat33 Rx = ToItkMatrix(arrayRx);
 		rotPart = Rx * rotPart;
-		std::cout << "rotPart: " << rotPart << std::endl;
+		//std::cout << "rotPart: " << rotPart << std::endl;
 
 		// Rotation around XZ:
 		double thetaXZ = -getTheta(rotPart.GetElement(0), rotPart.GetElement(2),
 			fixedPart.GetElement(0), fixedPart.GetElement(2));
-		std::cout << "thetaXZ: " << thetaXZ << std::endl;
+		//	std::cout << "thetaXZ: " << thetaXZ << std::endl;
 		double axisY[3] = { 0.0, 1.0, 0.0 };
 
 		/*
@@ -210,6 +227,42 @@ namespace
 		  =========
 		*/
 		double parametersArray[9] = { -thetaYZ, thetaXZ, -thetaXY, abs(fixedPoint[0]),abs(fixedPoint[1]), abs(fixedPoint[2]), 0,0,0 };
+		/*
+		====================================================
+		Some adaptions that have to be done for the skeleton
+		====================================================
+		*/
+		if (ComponentToRotate == 3) { // Nack
+			if (parametersArray[1] > 0) {
+				parametersArray[1] = -parametersArray[1];
+			}
+			if (parametersArray[2] > 0) {
+				parametersArray[2] = -parametersArray[2];
+			}
+		}
+		else if (ComponentToRotate == 21) { // LEFT HAND
+			//negRx = -1;
+		//	negRy = -1;
+		}
+		else if (ComponentToRotate == 20) { // LEFT UNDER ARM
+			//negRy = -1;
+		//	negRz = -1;
+		}
+		else if (ComponentToRotate == 19) { // LEFT UPPER ARM
+		//	negRx = -1;
+		//	negRy = -1;
+		//	negRz = -1;
+		}
+		else if (ComponentToRotate == 14) { // LEFT FEMURE
+			if (parametersArray[2] < 0) {
+				parametersArray[2] = -parametersArray[2];
+			}
+		}
+
+		/*
+		  ====================================================
+		  ====================================================
+		*/
 
 		//Nack correction
 		/*if (ComponentToRotate == 3) {
@@ -221,9 +274,23 @@ namespace
 			params[i] = parametersArray[i];
 		}
 		eulerTransform->SetParameters(params);
+
+		std::cout << "FixedPart " << ComponentFixed << " vec: " << fixedPart <<
+			" RotatePart " << ComponentToRotate << " vec: " << rotPart << endl <<
+			"Rx: " << parametersArray[0] << " Ry: " << parametersArray[1] << " Rz: " << parametersArray[2] << endl <<
+			"Cross Rx: " << getCross(rotPart.GetElement(1), rotPart.GetElement(2),
+				fixedPart.GetElement(1), fixedPart.GetElement(2)) <<
+			" Cross Ry: " << getCross(rotPart.GetElement(0), rotPart.GetElement(2),
+				fixedPart.GetElement(0), fixedPart.GetElement(2)) <<
+			" Cross Rz: " << getCross(rotPart.GetElement(0), rotPart.GetElement(1),
+				fixedPart.GetElement(0), fixedPart.GetElement(1)) << endl <<
+			"Cx: " << parametersArray[3] <<
+			" Cy: " << parametersArray[4] <<
+			" Cz: " << parametersArray[5] << std::endl;
+
 		//eulerTransform->SetCenter(fixedPoint);
-		std::cout << "Euler Transform with Center Set to fixed Point";
-		eulerTransform->Print(std::cout);
+	//	std::cout << "Euler Transform with Center Set to fixed Point";
+	//	eulerTransform->Print(std::cout);
 
 		/*
 		  Translation and rotation finished
@@ -254,14 +321,17 @@ namespace
 
 } // end of anonymous namespace
 
+double getCross(double vx, double vy, double ux, double uy) {
+	return vx * uy - vy * ux;
+}
 
 double getTheta(double vx, double vy, double ux, double uy) {
 	double va = -atan2(vx, vy)*180.0 / M_PI;
 	double ua = -atan2(ux, uy)*180.0 / M_PI;
-	double A = va - ua;
+	double A = (va - ua);
 	A = A - 360 * (A > 180) + 360 * (A < -180);
-	std::cout << "vx: " << vx << " vy: " << vy << " va : " << va
-		<< " ux: " << ux << " uy: " << uy << " ua: " << ua << std::endl;
+	//	std::cout << "vx: " << vx << " vy: " << vy << " va : " << va
+	//		<< " ux: " << ux << " uy: " << uy << " ua: " << ua << std::endl;
 	return A * M_PI / 180;
 }
 
