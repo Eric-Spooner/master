@@ -227,47 +227,26 @@ namespace
 		  =========
 		*/
 		double parametersArray[9] = { -thetaYZ, thetaXZ, -thetaXY, abs(fixedPoint[0]),abs(fixedPoint[1]), abs(fixedPoint[2]), 0,0,0 };
+		
+		std::cout << "BEFORE ADAPTION:" <<endl<< "FixedPart " << ComponentFixed << " vec: " << fixedPart <<
+			" RotatePart " << ComponentToRotate << " vec: " << rotPart << endl <<
+			"Rx: " << parametersArray[0] << " Ry: " << parametersArray[1] << " Rz: " << parametersArray[2] << endl <<
+			"Cross Rx: " << getCross(rotPart.GetElement(1), rotPart.GetElement(2),
+				fixedPart.GetElement(1), fixedPart.GetElement(2)) <<
+			" Cross Ry: " << getCross(rotPart.GetElement(0), rotPart.GetElement(2),
+				fixedPart.GetElement(0), fixedPart.GetElement(2)) <<
+			" Cross Rz: " << getCross(rotPart.GetElement(0), rotPart.GetElement(1),
+				fixedPart.GetElement(0), fixedPart.GetElement(1)) << endl <<
+			"Cx: " << parametersArray[3] <<
+			" Cy: " << parametersArray[4] <<
+			" Cz: " << parametersArray[5] << std::endl;
+
 		/*
 		====================================================
 		Some adaptions that have to be done for the skeleton
 		====================================================
 		*/
-		if (ComponentToRotate == 3) { // Nack
-			if (parametersArray[1] > 0) {
-				parametersArray[1] = -parametersArray[1];
-			}
-			if (parametersArray[2] > 0) {
-				parametersArray[2] = -parametersArray[2];
-			}
-		}
-		else if (ComponentToRotate == 21) { // LEFT HAND
-			//negRx = -1;
-		//	negRy = -1;
-		}
-		else if (ComponentToRotate == 20) { // LEFT UNDER ARM
-			//negRy = -1;
-		//	negRz = -1;
-		}
-		else if (ComponentToRotate == 19) { // LEFT UPPER ARM
-		//	negRx = -1;
-		//	negRy = -1;
-		//	negRz = -1;
-		}
-		else if (ComponentToRotate == 14) { // LEFT FEMURE
-			if (parametersArray[2] < 0) {
-				parametersArray[2] = -parametersArray[2];
-			}
-		}
-
-		/*
-		  ====================================================
-		  ====================================================
-		*/
-
-		//Nack correction
-		/*if (ComponentToRotate == 3) {
-			parametersArray[0] = -parametersArray[0];
-		}*/
+		specialAdaptions(parametersArray, ComponentToRotate);
 
 		TransformType::ParametersType params(9);
 		for (int i = 0; i < 9; i++) {
@@ -275,7 +254,7 @@ namespace
 		}
 		eulerTransform->SetParameters(params);
 
-		std::cout << "FixedPart " << ComponentFixed << " vec: " << fixedPart <<
+		std::cout << "AFTER ADAPTION:" << endl << "FixedPart " << ComponentFixed << " vec: " << fixedPart <<
 			" RotatePart " << ComponentToRotate << " vec: " << rotPart << endl <<
 			"Rx: " << parametersArray[0] << " Ry: " << parametersArray[1] << " Rz: " << parametersArray[2] << endl <<
 			"Cross Rx: " << getCross(rotPart.GetElement(1), rotPart.GetElement(2),
@@ -320,6 +299,92 @@ namespace
 	}
 
 } // end of anonymous namespace
+
+double get180adaption(double angle) {
+	if (angle < 0) {
+		return M_PI + angle;
+	}
+	return M_PI - angle;
+}
+
+void specialAdaptions(double* parametersArray, int ComponentToRotate) {
+
+	if (ComponentToRotate == 3) { // Nack
+		if (parametersArray[1] > 0) {
+			parametersArray[1] = -parametersArray[1];
+		}
+		if (parametersArray[2] > 0) {
+			parametersArray[2] = -parametersArray[2];
+		}
+	}
+	else if (ComponentToRotate == 21) { // LEFT HAND
+		if (parametersArray[1] > 0) {
+			parametersArray[1] = -parametersArray[1];
+		}
+		if (parametersArray[2] > 0) {
+			parametersArray[2] = -parametersArray[2];
+		}
+	}
+	else if (ComponentToRotate == 20) { // LEFT UNDER ARM
+		if (parametersArray[1] > 0) {
+			parametersArray[1] = -parametersArray[1];
+		}
+		if (parametersArray[2] > 0) {
+			parametersArray[2] = -parametersArray[2];
+		}
+	}
+	else if (ComponentToRotate == 19) { // LEFT UPPER ARM
+		if (parametersArray[0] < 0) {
+			parametersArray[0] = -parametersArray[0];
+		}
+		if (parametersArray[1] > 0) {
+			parametersArray[1] = -parametersArray[1];
+		}
+		if (parametersArray[2] > 0) {
+			parametersArray[2] = -parametersArray[2];
+		}
+	}
+	else if (ComponentToRotate == 14) { // LEFT FEMURE
+		parametersArray[2] = get180adaption(parametersArray[2]);
+		if (parametersArray[0] < 0) {
+			parametersArray[0] = -parametersArray[0];
+		}
+	}
+	else if (ComponentToRotate == 13) { // LEFT Tibea
+		parametersArray[2] = get180adaption(parametersArray[2]);
+	}
+	else if (ComponentToRotate == 17) { // RIGHT UNDER ARM
+		if (parametersArray[1] > 0) {
+			parametersArray[1] = -parametersArray[1];
+		}
+		if (parametersArray[2] > 0) {
+			parametersArray[2] = -parametersArray[2];
+		}
+	}
+	else if (ComponentToRotate == 16) { // RIGHT UPPER ARM
+		if (parametersArray[0] > 0) {
+			parametersArray[0] = -parametersArray[1];
+		}
+		if (parametersArray[1] < 0) {
+			parametersArray[1] = -parametersArray[1];
+		}
+		if (parametersArray[2] < 0) {
+			parametersArray[2] = -parametersArray[2];
+		}
+	}
+	else if (ComponentToRotate == 10) { // RIGHT TIBEA
+		parametersArray[2] = get180adaption(parametersArray[2]);
+		if (parametersArray[2] > 0) {
+			parametersArray[2] = -parametersArray[2];
+		}
+	}
+	else if (ComponentToRotate == 11) { // RIGHT FEMURE
+		parametersArray[2] = get180adaption(parametersArray[2]);
+		if (parametersArray[0] < 0) {
+			parametersArray[0] = -parametersArray[1];
+		}
+	}
+}
 
 double getCross(double vx, double vy, double ux, double uy) {
 	return vx * uy - vy * ux;
