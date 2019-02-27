@@ -3,6 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="3968e0fe-b6b3-4d4c-9107-650b0541eddd" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/../Logic/Logic.cxx" beforeDir="false" afterPath="$PROJECT_DIR$/../Logic/Logic.cxx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TModel.py" beforeDir="false" afterPath="$PROJECT_DIR$/TModel.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -16,8 +17,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/TModel.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="467">
-              <caret line="557" lean-forward="true" selection-start-line="557" selection-end-line="557" />
+            <state relative-caret-position="161">
+              <caret line="539" column="12" lean-forward="true" selection-start-line="539" selection-start-column="12" selection-end-line="539" selection-end-column="12" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -69,7 +70,7 @@
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="1485" />
+    <option name="x" value="-74" />
     <option name="y" value="-8" />
     <option name="width" value="1936" />
     <option name="height" value="1056" />
@@ -80,8 +81,8 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="ProjectPane" />
       <pane id="Scope" />
+      <pane id="ProjectPane" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -127,18 +128,18 @@
       <workItem from="1551087703848" duration="4348000" />
       <workItem from="1551098385470" duration="3696000" />
       <workItem from="1551105423623" duration="1572000" />
-      <workItem from="1551256341142" duration="8458000" />
+      <workItem from="1551256341142" duration="9057000" />
+      <workItem from="1551294091994" duration="2243000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="42422000" />
+    <option name="totallyTimeSpent" value="45264000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="1912" y="-8" width="1936" height="1056" extended-state="6" />
-    <editor active="true" />
+    <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.21321961" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2153518" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -174,8 +175,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/TModel.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="467">
-          <caret line="557" lean-forward="true" selection-start-line="557" selection-end-line="557" />
+        <state relative-caret-position="161">
+          <caret line="539" column="12" lean-forward="true" selection-start-line="539" selection-start-column="12" selection-end-line="539" selection-end-column="12" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>

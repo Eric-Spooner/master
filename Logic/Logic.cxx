@@ -129,7 +129,7 @@ namespace
 				rotateB = bx;
 			}
 
-			if (i == 7) {
+			if (i == 6) {
 				// Get the belly for the legs
 				bellyA = ax;
 				bellyB = bx;
@@ -161,7 +161,7 @@ namespace
 
 		if (ComponentToRotate == 10 || ComponentToRotate == 13) {
 			// The legs have to be rotated agains the belly NOT the pelvis
-			fixedPart = bellyB - bellyA;
+			fixedPart = bellyA - bellyB;
 		}
 
 		// Normalize the vectors
@@ -351,7 +351,16 @@ void specialAdaptions(double* parametersArray, int ComponentToRotate) {
 		}
 	}
 	else if (ComponentToRotate == 13) { // LEFT Tibea
-		parametersArray[2] = get180adaption(parametersArray[2]);
+		parametersArray[0] = get180adaption(parametersArray[0]);
+		if (parametersArray[0] > 0) {
+			parametersArray[0] = -parametersArray[0];
+		}
+		if (parametersArray[1] < 0) {
+			parametersArray[1] = -parametersArray[1];
+		}
+		if (parametersArray[2] > 0) {
+			parametersArray[2] = -parametersArray[2];
+		}
 	}
 	else if (ComponentToRotate == 17) { // RIGHT UNDER ARM
 		if (parametersArray[1] > 0) {
@@ -363,7 +372,6 @@ void specialAdaptions(double* parametersArray, int ComponentToRotate) {
 	}
 	else if (ComponentToRotate == 16) { // RIGHT UPPER ARM
 		if (parametersArray[0] > 0) {
-			parametersArray[0] = -parametersArray[1];
 		}
 		if (parametersArray[1] < 0) {
 			parametersArray[1] = -parametersArray[1];
@@ -373,7 +381,10 @@ void specialAdaptions(double* parametersArray, int ComponentToRotate) {
 		}
 	}
 	else if (ComponentToRotate == 10) { // RIGHT TIBEA
-		parametersArray[2] = get180adaption(parametersArray[2]);
+		parametersArray[0] = get180adaption(parametersArray[0]);
+		if (parametersArray[0] > 0) {
+			parametersArray[0] = -parametersArray[0];
+		}
 		if (parametersArray[2] > 0) {
 			parametersArray[2] = -parametersArray[2];
 		}
@@ -381,7 +392,7 @@ void specialAdaptions(double* parametersArray, int ComponentToRotate) {
 	else if (ComponentToRotate == 11) { // RIGHT FEMURE
 		parametersArray[2] = get180adaption(parametersArray[2]);
 		if (parametersArray[0] < 0) {
-			parametersArray[0] = -parametersArray[1];
+			parametersArray[0] = -parametersArray[0];
 		}
 	}
 }
