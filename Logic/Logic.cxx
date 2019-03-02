@@ -18,13 +18,24 @@
 #include <itkImageTransformer.h>
 #include <itkAffineTransform.h>
 #include <itkCenteredEuler3DTransform.h>
+#include <itkEuler3DTransform.h>
 #include <itkCenteredAffineTransform.h>
 #include <itkQuaternionRigidTransform.h>
 #include <itkResampleImageFilter.h>
+#include <itkVectorResampleImageFilter.h>
+#include <itkTranslationTransform.h>
+#include <itkCompositeTransform.h>
+#include <itkFixedCenterOfRotationAffineTransform.h>
+#include <itkv3Rigid3DTransform.h>
+#include <itkMatrixOffsetTransformBase.h>
+#include <itkDataObjectDecorator.h>
+#include <itkNearestNeighborInterpolateImageFunction.h>
+
 
 // VTK includes
 #include <vtkMatrix4x4.h>
 #include <vtkTransform.h>
+#include <vtkGeneralTransform.h>
 #include <vtkTransformFilter.h>
 #include <vtkVolume.h>
 #include <vtkNrrdReader.h>
@@ -91,7 +102,7 @@ namespace
 		//
 
 		vtkSmartPointer<vtkPolyData> armature;
-		armature.TakeReference(bender::IOUtils::ReadPolyData(ArmaturePoly.c_str(), false));
+		armature.TakeReference(bender::IOUtils::ReadPolyData(ArmaturePoly.c_str(), true));
 		//double restArmatureBounds[6] = { 0., -1., 0., -1., 0., -1. };
 		//armature->GetBounds(restArmatureBounds);
 		//std::cout << "Rest armature bounds: "
@@ -138,7 +149,7 @@ namespace
 				bellyB = bx;
 			}
 
-			//std::cout << "Segment " << i << " A : " << ax << " B : " << bx<< std::endl;
+			std::cout << "Segment " << i << " A : " << ax << " B : " << bx<< std::endl;
 			i++;
 		}
 
@@ -370,46 +381,29 @@ namespace
 
 
 
-/*
-====================================================
-====================================================
-		ROTATION MATRIX
-====================================================
-====================================================
-*/
-		using TransformTypeAffine = itk::CenteredAffineTransform<ScalarType>;
-
-		TransformTypeAffine::Pointer affine = TransformTypeAffine::New();
+		/*
+		====================================================
+		====================================================
+				ROTATION MATRIX
+		====================================================
+		====================================================
+		*/
+		double absCenter[3] = { abs(fixedPoint[0]),abs(fixedPoint[1]),abs(fixedPoint[2]) };
+		Vec3 center = Vec3(absCenter);
+		
+		using TransformTypeAffine = itk::MatrixOffsetTransformBase<ScalarType>;
+		TransformTypeAffine::Pointer rot = TransformTypeAffine::New();
 
 		Mat33 rotMat = getRotationMatrix(rotPart, fixedPart, ComponentToRotate);
-
-		/*TransformType::ParametersType affineParams(9 + 6);
-		int affineI = 0;
-		for (int i = 0; i < 3; i++) {
-			for (int j = 0; j < 3; j++) {
-				affineParams[affineI] = rotMat[i][j];
-				affineI++;
-			}
-		}
-		affineParams[affineI] = abs(fixedPoint[0]);
-		affineParams[affineI + 1] = abs(fixedPoint[1]);
-		affineParams[affineI + 2] = abs(fixedPoint[2]);
-		affineParams[affineI + 3] = 0;
-		affineParams[affineI + 4] = 0;
-		affineParams[affineI + 5] = 0;
-		affine->SetParameters(affineParams);*/
-
-		double zeroVec[3] = { 0,0,0 };
-		affine->SetMatrix(rotMat);
-		double absCenter[3] = { abs(fixedPoint[0]),abs(fixedPoint[1]),abs(fixedPoint[2]) };
-		affine->SetCenter(absCenter);
-		affine->SetTranslation(zeroVec);
-		affine->SetOffset(zeroVec);
+		Mat33 invRot = rotMat.GetInverse();
+		rot->SetMatrix(invRot);
+		rot->SetCenter(center);
+		//rot->SetTranslation(center);
+		rot->Print(std::cout);
 
 		std::cout << "FixedPart " << ComponentFixed << " vec: " << fixedPart <<
-			" RotatePart " << ComponentToRotate << " vec: " << rotPart << std::endl;
-
-		affine->Print(std::cout);
+			" RotatePart " << ComponentToRotate << " vec: " << rotPart <<
+			" Center: " << center << std::endl;
 
 		/*
 		====================================================
@@ -419,25 +413,27 @@ namespace
 		====================================================
 		*/
 
+		using InterpolatorType = itk::NearestNeighborInterpolateImageFunction<InputImageType, ScalarType>;
+		InterpolatorType::Pointer interpolator = InterpolatorType::New();
+
 		const InputImageType::SizeType& size = reader->GetOutput()->GetLargestPossibleRegion().GetSize();
+	
 		using ResampleImageFilterType = itk::ResampleImageFilter< InputImageType, OutputImageType >;
-		/*
-		  Result Resampling and writing
-		*/
-		typename ResampleImageFilterType::Pointer resample = ResampleImageFilterType::New();
-		resample->SetInput(reader->GetOutput());
-		resample->SetTransform(affine);
-		resample->SetReferenceImage(reader->GetOutput());
-		resample->UseReferenceImageOn();
-		resample->SetSize(size);
+		typename ResampleImageFilterType::Pointer compositeResample = ResampleImageFilterType::New();
+		compositeResample->SetInput(reader->GetOutput());
+		compositeResample->SetTransform(rot);
+		compositeResample->SetReferenceImage(reader->GetOutput());
+		compositeResample->UseReferenceImageOn();
+		compositeResample->SetSize(size);
+		compositeResample->SetInterpolator(interpolator);
 
 		typename WriterType::Pointer writer = WriterType::New();
 		itk::PluginFilterWatcher watchWriter(writer,
 			"Write Volume",
 			CLPProcessInformation);
 		writer->SetFileName(outputVolume.c_str());
-		writer->SetInput(resample->GetOutput());
-		writer->SetUseCompression(1);
+		writer->SetInput(compositeResample->GetOutput());
+		//writer->SetUseCompression(1);
 		writer->Update();
 
 

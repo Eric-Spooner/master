@@ -284,7 +284,6 @@ class TModelLogic(ScriptedLoadableModuleLogic):
                      'outputVolume': outputVolume.GetID()}
         cliNode = slicer.cli.run(slicer.modules.addvolume, None, cliParams, wait_for_completion=True)
 
-
         """
         **********************************************
         **********************************************
