@@ -18,6 +18,8 @@
 #include <itkImageTransformer.h>
 #include <itkAffineTransform.h>
 #include <itkCenteredEuler3DTransform.h>
+#include <itkCenteredAffineTransform.h>
+#include <itkQuaternionRigidTransform.h>
 #include <itkResampleImageFilter.h>
 
 // VTK includes
@@ -27,6 +29,7 @@
 #include <vtkVolume.h>
 #include <vtkNrrdReader.h>
 #include <vtkImageWriter.h>
+#include "Logic.h"
 
 typedef itk::Matrix<double, 2, 4> Mat24;
 
@@ -129,7 +132,7 @@ namespace
 				rotateB = bx;
 			}
 
-			if (i == 6) {
+			if (i == 7) {
 				// Get the belly for the legs
 				bellyA = ax;
 				bellyB = bx;
@@ -161,7 +164,8 @@ namespace
 
 		if (ComponentToRotate == 10 || ComponentToRotate == 13) {
 			// The legs have to be rotated agains the belly NOT the pelvis
-			fixedPart = bellyA - bellyB;
+			//fixedPart = bellyA - bellyB;
+			fixedPart = bellyB - bellyA;
 		}
 
 		// Normalize the vectors
@@ -174,98 +178,145 @@ namespace
 		  Translation and rotaion of the Rotational part according to the given fixed Part
 		  done by using an affine transformation.
 		*/
-		using TransformType = itk::CenteredEuler3DTransform<ScalarType>;
-		TransformType::Pointer eulerTransform = TransformType::New();
+		//using TransformType = itk::CenteredEuler3DTransform<ScalarType>;
+		//TransformType::Pointer eulerTransform = TransformType::New();
 
-		const InputImageType::SizeType& size = reader->GetOutput()->GetLargestPossibleRegion().GetSize();
-		using ResampleImageFilterType = itk::ResampleImageFilter< InputImageType, OutputImageType >;
+		
+		//using TransformTypeQuaternion = itk::QuaternionRigidTransform<ScalarType>;
+		//TransformTypeQuaternion::Pointer quaternion = TransformTypeQuaternion::New();
 
+		
 		/*
 		  ========
-		  ROTATION BEGIN
+		  ROTATION EULER BEGIN
 		  =========
 		*/
-		// Rotation around XY:
-		double thetaXY = getTheta(rotPart.GetElement(0), rotPart.GetElement(1),
-			fixedPart.GetElement(0), fixedPart.GetElement(1));
+		//// Rotation around XY:
+		//double thetaXY = getTheta(rotPart.GetElement(0), rotPart.GetElement(1),
+		//	fixedPart.GetElement(0), fixedPart.GetElement(1));
 
-		//std::cout << "thetaXY: " << thetaXY << std::endl;
-		double axisZ[3] = { 0.0, 0.0, 1.0 };
-		//  transformRotate->Rotate3D(Vec3(axisZ), thetaXY, false);
+		////std::cout << "thetaXY: " << thetaXY << std::endl;
+		//double axisZ[3] = { 0.0, 0.0, 1.0 };
+		////  transformRotate->Rotate3D(Vec3(axisZ), thetaXY, false);
 
-		  // calculate the new coordinates of the rotational part in order to carry on with rotational calculation
-		double arrayRz[3][3] = { {cos(thetaXY), sin(thetaXY), 0},
-							  {-sin(thetaXY),cos(thetaXY),0},
-							  { 0,0,1} };
-		Mat33 Rz = ToItkMatrix(arrayRz);
-		rotPart = Rz * rotPart;
-		//	std::cout << "rotPart: " << rotPart << std::endl;
+		//  // calculate the new coordinates of the rotational part in order to carry on with rotational calculation
+		//double arrayRz[3][3] = { {cos(thetaXY), sin(thetaXY), 0},
+		//					  {-sin(thetaXY),cos(thetaXY),0},
+		//					  { 0,0,1} };
+		//Mat33 Rz = ToItkMatrix(arrayRz);
+		//rotPart = Rz * rotPart;
+		////	std::cout << "rotPart: " << rotPart << std::endl;
 
-			// Rotation around YZ:
-		double thetaYZ = getTheta(rotPart.GetElement(1), rotPart.GetElement(2),
-			fixedPart.GetElement(1), fixedPart.GetElement(2));
-		//	std::cout << "thetaYZ: " << thetaYZ << std::endl;
-		double axisX[3] = { 1.0, 0.0, 0.0 };
+		//	// Rotation around YZ:
+		//double thetaYZ = getTheta(rotPart.GetElement(1), rotPart.GetElement(2),
+		//	fixedPart.GetElement(1), fixedPart.GetElement(2));
+		////	std::cout << "thetaYZ: " << thetaYZ << std::endl;
+		//double axisX[3] = { 1.0, 0.0, 0.0 };
 
-		// calculate the new coordinates of the rotational part in order to carry on with rotational calculation
-		double arrayRx[3][3] = { {1, 0, 0},
-							  {0,cos(thetaYZ),sin(thetaYZ)},
-							  {0,-sin(thetaYZ),cos(thetaYZ)} };
-		Mat33 Rx = ToItkMatrix(arrayRx);
-		rotPart = Rx * rotPart;
-		//std::cout << "rotPart: " << rotPart << std::endl;
+		//// calculate the new coordinates of the rotational part in order to carry on with rotational calculation
+		//double arrayRx[3][3] = { {1, 0, 0},
+		//					  {0,cos(thetaYZ),sin(thetaYZ)},
+		//					  {0,-sin(thetaYZ),cos(thetaYZ)} };
+		//Mat33 Rx = ToItkMatrix(arrayRx);
+		//rotPart = Rx * rotPart;
+		////std::cout << "rotPart: " << rotPart << std::endl;
 
-		// Rotation around XZ:
-		double thetaXZ = -getTheta(rotPart.GetElement(0), rotPart.GetElement(2),
-			fixedPart.GetElement(0), fixedPart.GetElement(2));
-		//	std::cout << "thetaXZ: " << thetaXZ << std::endl;
-		double axisY[3] = { 0.0, 1.0, 0.0 };
+		//// Rotation around XZ:
+		//double thetaXZ = -getTheta(rotPart.GetElement(0), rotPart.GetElement(2),
+		//	fixedPart.GetElement(0), fixedPart.GetElement(2));
+		////	std::cout << "thetaXZ: " << thetaXZ << std::endl;
+		//double axisY[3] = { 0.0, 1.0, 0.0 };
+
+		//double arrayRy[3][3] = { {cos(thetaXZ), 0, sin(thetaXZ)},
+		//						{0,1,0},
+		//						{sin(thetaXZ),0,cos(thetaXZ)} };
+		//Mat33 Ry = ToItkMatrix(arrayRy);
+
+		//Mat33 R = Rz * Ry * Rx;
 
 		/*
 		  ========
 		  ROTATION END
 		  =========
 		*/
-		double parametersArray[9] = { -thetaYZ, thetaXZ, -thetaXY, abs(fixedPoint[0]),abs(fixedPoint[1]), abs(fixedPoint[2]), 0,0,0 };
-		
-		std::cout << "BEFORE ADAPTION:" <<endl<< "FixedPart " << ComponentFixed << " vec: " << fixedPart <<
-			" RotatePart " << ComponentToRotate << " vec: " << rotPart << endl <<
-			"Rx: " << parametersArray[0] << " Ry: " << parametersArray[1] << " Rz: " << parametersArray[2] << endl <<
-			"Cross Rx: " << getCross(rotPart.GetElement(1), rotPart.GetElement(2),
-				fixedPart.GetElement(1), fixedPart.GetElement(2)) <<
-			" Cross Ry: " << getCross(rotPart.GetElement(0), rotPart.GetElement(2),
-				fixedPart.GetElement(0), fixedPart.GetElement(2)) <<
-			" Cross Rz: " << getCross(rotPart.GetElement(0), rotPart.GetElement(1),
-				fixedPart.GetElement(0), fixedPart.GetElement(1)) << endl <<
-			"Cx: " << parametersArray[3] <<
-			" Cy: " << parametersArray[4] <<
-			" Cz: " << parametersArray[5] << std::endl;
+
+
 
 		/*
-		====================================================
-		Some adaptions that have to be done for the skeleton
-		====================================================
+		  ========
+		  EULER EULER
+		  =========
 		*/
-		specialAdaptions(parametersArray, ComponentToRotate);
+
+		//double parametersArray[9] = { -thetaYZ, thetaXZ, -thetaXY, abs(fixedPoint[0]),abs(fixedPoint[1]), abs(fixedPoint[2]), 0,0,0 };
+
+		//std::cout << "BEFORE ADAPTION:" << endl << "FixedPart " << ComponentFixed << " vec: " << fixedPart <<
+		//	" RotatePart " << ComponentToRotate << " vec: " << rotPart << endl <<
+		//	"Rx: " << parametersArray[0] << " Ry: " << parametersArray[1] << " Rz: " << parametersArray[2] << endl <<
+		//	"Cross Rx: " << getCross(rotPart.GetElement(1), rotPart.GetElement(2),
+		//		fixedPart.GetElement(1), fixedPart.GetElement(2)) <<
+		//	" Cross Ry: " << getCross(rotPart.GetElement(0), rotPart.GetElement(2),
+		//		fixedPart.GetElement(0), fixedPart.GetElement(2)) <<
+		//	" Cross Rz: " << getCross(rotPart.GetElement(0), rotPart.GetElement(1),
+		//		fixedPart.GetElement(0), fixedPart.GetElement(1)) << endl <<
+		//	"Cx: " << parametersArray[3] <<
+		//	" Cy: " << parametersArray[4] <<
+		//	" Cz: " << parametersArray[5] << std::endl;
+
+		/*
+		Some adaptions that have to be done for the skeleton
+		*/
+		/*specialAdaptions(parametersArray, ComponentToRotate);
 
 		TransformType::ParametersType params(9);
 		for (int i = 0; i < 9; i++) {
 			params[i] = parametersArray[i];
 		}
-		eulerTransform->SetParameters(params);
+		eulerTransform->SetParameters(params);*/
 
-		std::cout << "AFTER ADAPTION:" << endl << "FixedPart " << ComponentFixed << " vec: " << fixedPart <<
-			" RotatePart " << ComponentToRotate << " vec: " << rotPart << endl <<
-			"Rx: " << parametersArray[0] << " Ry: " << parametersArray[1] << " Rz: " << parametersArray[2] << endl <<
-			"Cross Rx: " << getCross(rotPart.GetElement(1), rotPart.GetElement(2),
-				fixedPart.GetElement(1), fixedPart.GetElement(2)) <<
-			" Cross Ry: " << getCross(rotPart.GetElement(0), rotPart.GetElement(2),
-				fixedPart.GetElement(0), fixedPart.GetElement(2)) <<
-			" Cross Rz: " << getCross(rotPart.GetElement(0), rotPart.GetElement(1),
-				fixedPart.GetElement(0), fixedPart.GetElement(1)) << endl <<
-			"Cx: " << parametersArray[3] <<
-			" Cy: " << parametersArray[4] <<
-			" Cz: " << parametersArray[5] << std::endl;
+		//std::cout << "AFTER ADAPTION:" << endl << "FixedPart " << ComponentFixed << " vec: " << fixedPart <<
+		//	" RotatePart " << ComponentToRotate << " vec: " << rotPart << endl <<
+		//	"Rx: " << parametersArray[0] << " Ry: " << parametersArray[1] << " Rz: " << parametersArray[2] << endl <<
+		//	"Cross Rx: " << getCross(rotPart.GetElement(1), rotPart.GetElement(2),
+		//		fixedPart.GetElement(1), fixedPart.GetElement(2)) <<
+		//	" Cross Ry: " << getCross(rotPart.GetElement(0), rotPart.GetElement(2),
+		//		fixedPart.GetElement(0), fixedPart.GetElement(2)) <<
+		//	" Cross Rz: " << getCross(rotPart.GetElement(0), rotPart.GetElement(1),
+		//		fixedPart.GetElement(0), fixedPart.GetElement(1)) << endl <<
+		//	"Cx: " << parametersArray[3] <<
+		//	" Cy: " << parametersArray[4] <<
+		//	" Cz: " << parametersArray[5] << std::endl;
+
+		/*
+		  ========
+		  EULER EULER
+		  =========
+		*/
+
+
+		/*
+			AFFINE TRANSFORM
+		*/
+
+		//TransformType::ParametersType affineParams(9 + 6);
+		//int affineI = 0;
+		//for (int i = 0; i < 3; i++) {
+		//	for (int j = 0; j < 3; j++) {
+		//		affineParams[affineI] = R[i][j];
+		//		affineI++;
+		//	}
+		//}
+		//affineParams[affineI] = abs(fixedPoint[0]);
+		//affineParams[affineI + 1] = abs(fixedPoint[1]);
+		//affineParams[affineI + 2] = abs(fixedPoint[2]);
+		//affineParams[affineI + 3] = 0;
+		//affineParams[affineI + 4] = 0;
+		//affineParams[affineI + 5] = 0;
+		//affine->SetParameters(affineParams);
+		/*
+		AFFINE TRANSFORM
+		*/
+
 
 		//eulerTransform->SetCenter(fixedPoint);
 	//	std::cout << "Euler Transform with Center Set to fixed Point";
@@ -276,11 +327,106 @@ namespace
 		*/
 
 		/*
+		====================================================
+		====================================================
+				QUATERNION BEGIN
+		====================================================
+		====================================================
+		*/
+
+		//Vec4 quat = getQuaternation(rotPart, fixedPart);
+		/*Vec4 quat = getQuaternion2(rotPart, fixedPart);
+
+		TransformTypeQuaternion::ParametersType quaternionParams(7);
+		TransformTypeQuaternion::FixedParametersType fixedQuaternionParams(3);
+
+		for (int i = 0; i < 4; i++) {
+			quaternionParams[i] = quat[i];
+		}
+		for (int i = 3; i < 7; i++) {
+			quaternionParams[i] = 0;
+		}
+
+		fixedQuaternionParams[0] = abs(fixedPoint[0]);
+		fixedQuaternionParams[1] = abs(fixedPoint[1]);
+		fixedQuaternionParams[2] = abs(fixedPoint[2]);
+
+		quaternion->SetFixedParameters(fixedQuaternionParams);
+		quaternion->SetParameters(quaternionParams);
+
+		std::cout << "FixedPart " << ComponentFixed << " vec: " << fixedPart <<
+			" RotatePart " << ComponentToRotate << " vec: " << rotPart << endl
+			<< "Quaternation: " << quat << fixedPoint << std::endl;
+
+		quaternion->Print(std::cout);
+*/
+/*
+====================================================
+====================================================
+		QUATERNION END
+====================================================
+====================================================
+*/
+
+
+
+/*
+====================================================
+====================================================
+		ROTATION MATRIX
+====================================================
+====================================================
+*/
+		using TransformTypeAffine = itk::CenteredAffineTransform<ScalarType>;
+
+		TransformTypeAffine::Pointer affine = TransformTypeAffine::New();
+
+		Mat33 rotMat = getRotationMatrix(rotPart, fixedPart, ComponentToRotate);
+
+		/*TransformType::ParametersType affineParams(9 + 6);
+		int affineI = 0;
+		for (int i = 0; i < 3; i++) {
+			for (int j = 0; j < 3; j++) {
+				affineParams[affineI] = rotMat[i][j];
+				affineI++;
+			}
+		}
+		affineParams[affineI] = abs(fixedPoint[0]);
+		affineParams[affineI + 1] = abs(fixedPoint[1]);
+		affineParams[affineI + 2] = abs(fixedPoint[2]);
+		affineParams[affineI + 3] = 0;
+		affineParams[affineI + 4] = 0;
+		affineParams[affineI + 5] = 0;
+		affine->SetParameters(affineParams);*/
+
+		double zeroVec[3] = { 0,0,0 };
+		affine->SetMatrix(rotMat);
+		double absCenter[3] = { abs(fixedPoint[0]),abs(fixedPoint[1]),abs(fixedPoint[2]) };
+		affine->SetCenter(absCenter);
+		affine->SetTranslation(zeroVec);
+		affine->SetOffset(zeroVec);
+
+		std::cout << "FixedPart " << ComponentFixed << " vec: " << fixedPart <<
+			" RotatePart " << ComponentToRotate << " vec: " << rotPart << std::endl;
+
+		affine->Print(std::cout);
+
+		/*
+		====================================================
+		====================================================
+				ROTATION MATRIX END
+		====================================================
+		====================================================
+		*/
+
+		const InputImageType::SizeType& size = reader->GetOutput()->GetLargestPossibleRegion().GetSize();
+		using ResampleImageFilterType = itk::ResampleImageFilter< InputImageType, OutputImageType >;
+		/*
 		  Result Resampling and writing
 		*/
 		typename ResampleImageFilterType::Pointer resample = ResampleImageFilterType::New();
 		resample->SetInput(reader->GetOutput());
-		resample->SetTransform(eulerTransform);
+		resample->SetTransform(affine);
 		resample->SetReferenceImage(reader->GetOutput());
 		resample->UseReferenceImageOn();
 		resample->SetSize(size);
@@ -395,6 +541,113 @@ void specialAdaptions(double* parametersArray, int ComponentToRotate) {
 			parametersArray[0] = -parametersArray[0];
 		}
 	}
+}
+
+double dot(Vec3 vec1, Vec3 vec2)
+{
+	return vec1[0] * vec2[0] + vec1[1] * vec2[1] + vec1[2] * vec2[2];
+}
+
+Vec3 cross(Vec3 vec1, Vec3 vec2)
+{
+	double vec[3] = { vec1[1] * vec2[2] - vec1[2] * vec2[1],
+					  vec1[2] * vec2[0] - vec1[0] * vec2[2],
+					  vec1[0] * vec2[1] - vec1[1] * vec2[0] };
+	return Vec3(vec);
+}
+
+Vec4 getQuaternation(Vec3 rotate, Vec3 fixed) {
+	Vec3 c = cross(rotate, fixed) / (rotate.GetNorm() * fixed.GetNorm());
+	double d = dot(rotate, fixed);
+	Vec3 r = c / c.GetNorm();
+	double phi = asin(1 / c.GetNorm());
+	if (d < 0) { // Correction 
+		r = -r;
+		phi = -phi;
+	}
+	//Unit Quaternation
+	double angle = phi / 2.0;
+	double sinAngle = sin(angle);
+	//https://math.stackexchange.com/questions/1845892/rotation-and-translation-parameters-from-two-3d-vectors
+	double quaternation[4] = { cos(angle),
+							  sinAngle*r[0],
+							  sinAngle*r[1],
+							  sinAngle*r[2]
+	};
+	std::cout << "C: " << c << " CNorm: " << c.GetNorm() << " r: " << r << " phi: " << phi << " angle: " << angle << " sinAngle: " << sinAngle << std::endl;
+	return Vec4(quaternation);
+}
+
+Vec4 getAxisAngelQuat(Vec3 axis, double angle) {
+	double out[4];
+	angle = angle * 0.5;
+	double s = sin(angle);
+	out[3] = cos(angle);
+	out[0] = s * axis[0];
+	out[1] = s * axis[1];
+	out[2] = s * axis[2];
+	return out;
+}
+
+//https://stackoverflow.com/questions/1171849/finding-quaternion-representing-the-rotation-from-one-vector-to-another
+//https://github.com/toji/gl-matrix/blob/f0583ef53e94bc7e78b78c8a24f09ed5e2f7a20c/src/gl-matrix/quat.js#L54
+Vec4 getQuaternion2(Vec3 rotate, Vec3 fixed) {
+	double xAxis[3] = { 1,0,0 };
+	double yAxis[3] = { 0,1,0 };
+	Vec3 xA = Vec3(xAxis);
+	Vec3 yA = Vec3(yAxis);
+
+	Vec3 c = cross(rotate, fixed);
+	double d = dot(rotate, fixed);
+
+	double quaternion[4];
+	if (d < -0.999999) {
+		c = cross(xA, rotate);
+		if (c.GetNorm() < 0.000001) {
+			c = cross(yA, rotate);
+		}
+		c = c / c.GetNorm();
+		return getAxisAngelQuat(c, M_PI);
+	}
+	else if (d > 0.99999999) {
+		quaternion[3] = 1;
+		quaternion[0] = 0;
+		quaternion[1] = 0;
+		quaternion[2] = 0;
+	}
+	else {
+		quaternion[3] = 1 + d;
+		quaternion[0] = c[0];
+		quaternion[1] = c[1];
+		quaternion[2] = c[2];
+	}
+	return Vec4(quaternion);
+}
+
+//http://immersivemath.com/forum/question/rotation-matrix-from-one-vector-to-another/
+Mat33 getRotationMatrix(Vec3 rotate, Vec3 fixed, int rotPart) {
+	Vec3 crossVec = cross(rotate, fixed);
+	Vec3 a = (crossVec / crossVec.GetNorm());
+	double dotProd = dot(rotate, fixed);
+
+	double alpha = acos(dotProd);
+	double c = cos(alpha);
+	double s = sin(alpha);
+
+	std::cout << "Rotation Matrix: crossVec: " << crossVec << " a: " << a << " alpha: " << alpha << " c: " << c << " s: " << s << std::endl;
+
+	double mVal[3][3] = {
+		{pow(a[0],2)* (1 - c) + c, a[0] * a[1] * (1 - c) - s * a[2], a[0] * a[2] * (1 - c) + s * a[1] },
+		{a[0] * a[1] * (1 - c) + s * a[2], pow(a[1],2)*(1 - c) + c, a[1] * a[2] * (1 - c) - s * a[0]},
+		{a[0] * a[2] * (1 - c) - s * a[1], a[1] * a[2] * (1 - c) + s * a[0], pow(a[2],2)*(1 - c) + c}
+	};
+	Mat33 retVal;
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			retVal[i][j] = mVal[i][j];
+		}
+	}
+	return retVal;
 }
 
 double getCross(double vx, double vy, double ux, double uy) {

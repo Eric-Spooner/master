@@ -199,17 +199,101 @@ class TModelLogic(ScriptedLoadableModuleLogic):
         cliNode = slicer.cli.run(slicer.modules.thresholdmaster, None, cliParams, wait_for_completion=True)
 
         """
-                       **********************************************
-                       **********************************************
-                       *                                            *
-                       *             RIGHT LEG BEGIN                *
-                       *                                            *
-                       **********************************************
-                       **********************************************
-                       """
+               **********************************************
+               **********************************************
+               *                                            *
+               *             LEFT ARM BEGIN                 *
+               *                                            *
+               **********************************************
+               **********************************************
+               """
+        """
+        Start with the left arm and hand
+        """
+        leftHand = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "leftHand")
 
-        """Start with the right arm and hand
-            """
+        # Get the left hand
+        cliParams = {'InputVolume': expandedVolume, 'OutputVolume': leftHand,
+                     'Lower': 21, 'Upper': 21, 'ThresholdType': 'Outside'}
+        cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True)
+
+        leftHandRotateVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "leftHandRotateVolume")
+
+        # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
+        cliParams = {'inputVolume': leftHand, 'ComponentToRotate': 21,
+                     'ComponentFixed': 20, 'ArmaturePoly': armatureModel.GetID(),
+                     'outputVolume': leftHandRotateVolume}
+        cliNode = slicer.cli.run(slicer.modules.logic, None, cliParams, wait_for_completion=True)
+
+        # Get the left under arm
+        leftUnderArm = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "leftUnderArm")
+
+        # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
+        cliParams = {'InputVolume': expandedVolume, 'OutputVolume': leftUnderArm,
+                     'Lower': 20, 'Upper': 20, 'ThresholdType': 'Outside'}
+        cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True)
+
+        """ Combine hand with underarm
+        """
+        leftUnderArmAndHand = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "leftUnderArmAndHand")
+
+        cliParams = {'inputVolume1': leftUnderArm, 'inputVolume2': leftHandRotateVolume,
+                     'outputVolume': leftUnderArmAndHand}
+        cliNode = slicer.cli.run(slicer.modules.addvolume, None, cliParams, wait_for_completion=True)
+
+        ####
+        leftUnderArmAndHandRotate = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode",
+                                                                       "leftUnderArmAndHandRotate")
+
+        # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
+        cliParams = {'inputVolume': leftUnderArmAndHand, 'ComponentToRotate': 20,
+                     'ComponentFixed': 19, 'ArmaturePoly': armatureModel.GetID(),
+                     'outputVolume': leftUnderArmAndHandRotate}
+        cliNode = slicer.cli.run(slicer.modules.logic, None, cliParams, wait_for_completion=True)
+
+        # Get the left upper arm
+        leftUpperArm = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "leftUpperArm")
+
+        # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
+        cliParams = {'InputVolume': expandedVolume, 'OutputVolume': leftUpperArm,
+                     'Lower': 19, 'Upper': 19, 'ThresholdType': 'Outside'}
+        cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True)
+
+        """ Combine hand with underarm
+        """
+        leftUpperArmAndRest = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "leftUpperArmAndRest")
+
+        cliParams = {'inputVolume1': leftUpperArm, 'inputVolume2': leftUnderArmAndHandRotate,
+                     'outputVolume': leftUpperArmAndRest}
+        cliNode = slicer.cli.run(slicer.modules.addvolume, None, cliParams, wait_for_completion=True)
+
+        ####
+        leftUpperArmAndRestRotate = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode",
+                                                                       "leftUpperArmAndRestRotate")
+
+        # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
+        cliParams = {'inputVolume': leftUpperArmAndRest, 'ComponentToRotate': 19,
+                     'ComponentFixed': 4, 'ArmaturePoly': armatureModel.GetID(),
+                     'outputVolume': leftUpperArmAndRestRotate}
+        cliNode = slicer.cli.run(slicer.modules.logic, None, cliParams, wait_for_completion=True)
+
+        """
+          add the completed parts to the torso
+        """
+        cliParams = {'inputVolume1': outputVolume.GetID(), 'inputVolume2': leftUpperArmAndRestRotate,
+                     'outputVolume': outputVolume.GetID()}
+        cliNode = slicer.cli.run(slicer.modules.addvolume, None, cliParams, wait_for_completion=True)
+
+
+        """
+        **********************************************
+        **********************************************
+        *                                            *
+        *              RIGHT LEG BEGIN                *
+        *                                            *
+        **********************************************
+        **********************************************
+        """
         rightFootAndFemure = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "rightFootAndFemure")
 
         # Get the right foot and tibea
@@ -320,7 +404,6 @@ class TModelLogic(ScriptedLoadableModuleLogic):
                      'outputVolume': outputVolume.GetID()}
         cliNode = slicer.cli.run(slicer.modules.addvolume, None, cliParams, wait_for_completion=True)
 
-
         """
         **********************************************
         **********************************************
@@ -377,95 +460,6 @@ class TModelLogic(ScriptedLoadableModuleLogic):
         cliParams = {'inputVolume1': outputVolume.GetID(), 'inputVolume2': nackHeadRotate,
                      'outputVolume': outputVolume.GetID()}
         cliNode = slicer.cli.run(slicer.modules.addvolume, None, cliParams, wait_for_completion=True)
-
-
-        """
-        **********************************************
-        **********************************************
-        *                                            *
-        *             LEFT ARM BEGIN                 *
-        *                                            *
-        **********************************************
-        **********************************************
-        """
-        """
-        Start with the left arm and hand
-        """
-        leftHand = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "leftHand")
-
-        # Get the left hand
-        cliParams = {'InputVolume': expandedVolume, 'OutputVolume': leftHand,
-                     'Lower': 21, 'Upper': 21, 'ThresholdType': 'Outside'}
-        cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True)
-
-        leftHandRotateVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "leftHandRotateVolume")
-
-        # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
-        cliParams = {'inputVolume': leftHand, 'ComponentToRotate': 21,
-                     'ComponentFixed': 20, 'ArmaturePoly': armatureModel.GetID(),
-                     'outputVolume': leftHandRotateVolume}
-        cliNode = slicer.cli.run(slicer.modules.logic, None, cliParams, wait_for_completion=True)
-
-        # Get the left under arm
-        leftUnderArm = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "leftUnderArm")
-
-        # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
-        cliParams = {'InputVolume': expandedVolume, 'OutputVolume': leftUnderArm,
-                     'Lower': 20, 'Upper': 20, 'ThresholdType': 'Outside'}
-        cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True)
-
-        """ Combine hand with underarm
-        """
-        leftUnderArmAndHand = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "leftUnderArmAndHand")
-
-        cliParams = {'inputVolume1': leftUnderArm, 'inputVolume2': leftHandRotateVolume,
-                     'outputVolume': leftUnderArmAndHand}
-        cliNode = slicer.cli.run(slicer.modules.addvolume, None, cliParams, wait_for_completion=True)
-
-        ####
-        leftUnderArmAndHandRotate = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode",
-                                                                       "leftUnderArmAndHandRotate")
-
-        # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
-        cliParams = {'inputVolume': leftUnderArmAndHand, 'ComponentToRotate': 20,
-                     'ComponentFixed': 19, 'ArmaturePoly': armatureModel.GetID(),
-                     'outputVolume': leftUnderArmAndHandRotate}
-        cliNode = slicer.cli.run(slicer.modules.logic, None, cliParams, wait_for_completion=True)
-
-        # Get the left upper arm
-        leftUpperArm = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "leftUpperArm")
-
-        # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
-        cliParams = {'InputVolume': expandedVolume, 'OutputVolume': leftUpperArm,
-                     'Lower': 19, 'Upper': 19, 'ThresholdType': 'Outside'}
-        cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True)
-
-        """ Combine hand with underarm
-        """
-        leftUpperArmAndRest = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "leftUpperArmAndRest")
-
-        cliParams = {'inputVolume1': leftUpperArm, 'inputVolume2': leftUnderArmAndHandRotate,
-                     'outputVolume': leftUpperArmAndRest}
-        cliNode = slicer.cli.run(slicer.modules.addvolume, None, cliParams, wait_for_completion=True)
-
-        ####
-        leftUpperArmAndRestRotate = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode",
-                                                                       "leftUpperArmAndRestRotate")
-
-        # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
-        cliParams = {'inputVolume': leftUpperArmAndRest, 'ComponentToRotate': 19,
-                     'ComponentFixed': 4, 'ArmaturePoly': armatureModel.GetID(),
-                     'outputVolume': leftUpperArmAndRestRotate}
-        cliNode = slicer.cli.run(slicer.modules.logic, None, cliParams, wait_for_completion=True)
-
-        """
-          add the completed parts to the torso
-        """
-        cliParams = {'inputVolume1': outputVolume.GetID(), 'inputVolume2': leftUpperArmAndRestRotate,
-                     'outputVolume': outputVolume.GetID()}
-        cliNode = slicer.cli.run(slicer.modules.addvolume, None, cliParams, wait_for_completion=True)
-
-
 
         """
         **********************************************

@@ -56,9 +56,9 @@ namespace
 
 		// Make a bounding box large enough for the potentally largest rotated volume
 		InputImageType::SizeType outputsize;
-		outputsize[0] = size[0] * 1.8;
-		outputsize[1] = size[1] * 1.8;
-		outputsize[2] = size[2] * 1.8;
+		outputsize[0] = size[0] * 2;
+		outputsize[1] = size[1] * 2;
+		outputsize[2] = size[2] * 2;
 		//outputsize[1] = sqrt(pow((double)size[1] * spacing[1], 2.0) +
 	//		pow((double)size[2] * spacing[2], 2.0)) / spacing[1];
 	//	outputsize[2] = (double)outputsize[1] * spacing[1] / spacing[2];
